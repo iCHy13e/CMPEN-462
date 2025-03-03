@@ -122,4 +122,16 @@ covers several key components:
         \item \textbf{RF Modulation}: The analog signal would then be modulated with the carrier frequency to boost the signal before being broadcasted by the antenna
     \end{enumerate}
 \end{enumerate}
+
+
+%---------------------TECHNICAL PROBLEMS---------------------
+\newpage
+\secHeader{Technical Problems}
+\vspace{5mm}
+\begin{enumerate}
+    \item \textbf{Modulation Schemes}: Had a bit of an issue understanding the math behind the modulation schemes and figuring out how to implement them accurately
+    , but wasn't too bad afterwards
+    \item \textbf{Cyclic Prefix}: I made an error when I first coded the cyclic prefix insertion, and prematurely flattened the output from the IFFT which caused the code to throw an
+    fault and say that the array was inaccessable. Fixed the issue after going over the diagrams again, and only flattened the array after performing the cyclic prefix insertion
+\end{enumerate} 
 \end{document}
