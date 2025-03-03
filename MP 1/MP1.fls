@@ -1,8 +1,8 @@
-PWD d:/Work Stuff/CODEE/462 Work/MP 1
+PWD d:/Work Stuff/CODEE/CMPSC-462/MP 1
 INPUT c:/texlive/2024/texmf.cnf
 INPUT c:/texlive/2024/texmf-dist/web2c/texmf.cnf
 INPUT c:/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt
-INPUT d:/Work Stuff/CODEE/462 Work/MP 1/MP1.tex
+INPUT d:/Work Stuff/CODEE/CMPSC-462/MP 1/MP1.tex
 OUTPUT MP1.log
 INPUT c:/texlive/2024/texmf-dist/tex/latex/base/article.cls
 INPUT c:/texlive/2024/texmf-dist/tex/latex/base/article.cls
@@ -268,6 +268,26 @@ INPUT c:/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmex10.tfm
 INPUT c:/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex8.tfm
 INPUT c:/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
 INPUT c:/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmtt10.tfm
+INPUT ./BPSK.png
+INPUT ./BPSK.png
+INPUT ./BPSK.png
+INPUT ./BPSK.png
+INPUT ./BPSK.png
+INPUT ./PIBPSK.png
+INPUT ./PIBPSK.png
+INPUT ./PIBPSK.png
+INPUT ./PIBPSK.png
+INPUT ./PIBPSK.png
+INPUT ./QPSK.png
+INPUT ./QPSK.png
+INPUT ./QPSK.png
+INPUT ./QPSK.png
+INPUT ./QPSK.png
+INPUT ./64QAM.png
+INPUT ./64QAM.png
+INPUT ./64QAM.png
+INPUT ./64QAM.png
+INPUT ./64QAM.png
 INPUT MP1.aux
 INPUT ./MP1.out
 INPUT ./MP1.out
