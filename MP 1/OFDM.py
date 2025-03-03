@@ -67,8 +67,6 @@ def s2p_iff(symbols):
     #5. IFFT
     # pass  parallel symbols through IFFT since we dont worry about resource element mapping in this project
     parallel_ifft = np.fft.ifft(parallel_symbols, axis=1)
-
-    #return a serialized version of parallel ifft so that we can perform cyclic prefix insertion
     return parallel_ifft
 
 

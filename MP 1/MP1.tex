@@ -66,8 +66,8 @@ Name: Justin Ngo
 \secHeader{Abstract}
 \vspace{5mm}
 
-This report presents the implementation and analysis of an Orthogonal Frequency Division Multiplexing (OFDM) system. 
-The project involves several key components:
+This report presents the implementation and analysis of an Orthogonal Frequency Division Multiplexing (OFDM) system and 
+covers several key components:
 
 \begin{enumerate}
     \item \textbf{Modulation Schemes}: Different modulation schemes such as BPSK, $\pi$/2-BPSK, QPSK, and 64-QAM are implemented in the 
@@ -82,6 +82,7 @@ The project involves several key components:
 
     \item \textbf{Visualization}: A sample of 2 symbols generated from the OFDM system is plotted for visualization and highlights the cyclic prefix and symbol boundaries. 
 \end{enumerate}
+
 
 %---------------------GRAPHS---------------------
 \newpage
@@ -98,4 +99,27 @@ The project involves several key components:
     \includegraphics[width=\textwidth,height=4.25in]{QPSK.png}
     \includegraphics[width=\textwidth,height=4.25in]{64QAM.png}
 \end{figure}
+
+
+%---------------------FLOW DIAGRAM---------------------
+\newpage
+\secHeader{Flow Diagram}
+\vspace{5mm}
+\begin{enumerate}
+    \item \textbf{Bit Stream Generation}: The input bit stream is generated from the ASCII conversion of the phrase "WirelessCommunicationSystemsandSecurityJustinNgo" 
+    and is repeated to ensure a minimum length of 1 slot using the \texttt{64QAM} modulation scheme, since that requires the most bits per symbol.
+    \item \textbf{Modulation}: Depending on the modulation scheme passed into the \texttt{OFDM} function, the input bits are mapped to a constellation based off of figure 5.2
+    from the book, that was provided in the lecture slides. The formulas I used were approximations of what were provided on the 3GPP TS 38.211 pdf.
+    \item \textbf{Serial to Parallel Conversion}: After modulation, the bits are passed into the \\
+    \texttt{s2p} function which converts the serial input into a parallel output before running the IFFT
+    \item \textbf{IFFT}: The \texttt{IFFT} is run immediately after the bits are reorganized within the \texttt{s2p} function, and is the final output from \texttt{s2p}
+    \item \textbf{Cyclic Prefix Insertion}: The 2d array that's returned as the IFFT from \texttt{s2p} is then passed into \texttt{cyc\_pref}, where each symbol 
+    is prepended with the last $2034T_c$ of it's output
+    \item \textbf{Steps That Weren't Modeled}:
+    \begin{enumerate}
+        \item \textbf{Parallel to Serial Conversion}: The parallel output of the Prefix Insertions would then be flattened into a serialized output for processing at the DAC
+        \item \textbf{DAC}: The DAC would convert the digital signal into an analog signal for transmission
+        \item \textbf{RF Modulation}: The analog signal would then be modulated with the carrier frequency to boost the signal before being broadcasted by the antenna
+    \end{enumerate}
+\end{enumerate}
 \end{document}

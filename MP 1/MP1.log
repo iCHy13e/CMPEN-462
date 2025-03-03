@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.7.8)  3 MAR 2025 11:59
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.7.8)  3 MAR 2025 12:38
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -600,12 +600,12 @@ Package pdflscape Info: Auto-detected driver: pdftex on input line 81.
 <BPSK.png, id=24, 867.24pt x 433.62pt>
 File: BPSK.png Graphic file (type png)
 <use BPSK.png>
-Package pdftex.def Info: BPSK.png  used on input line 91.
+Package pdftex.def Info: BPSK.png  used on input line 92.
 (pdftex.def)             Requested size: 469.75827pt x 307.16438pt.
 <PIBPSK.png, id=26, 867.24pt x 433.62pt>
 File: PIBPSK.png Graphic file (type png)
 <use PIBPSK.png>
-Package pdftex.def Info: PIBPSK.png  used on input line 92.
+Package pdftex.def Info: PIBPSK.png  used on input line 93.
 (pdftex.def)             Requested size: 469.75827pt x 307.16438pt.
 
 
@@ -613,16 +613,18 @@ Package pdftex.def Info: PIBPSK.png  used on input line 92.
 <QPSK.png, id=33, 867.24pt x 433.62pt>
 File: QPSK.png Graphic file (type png)
 <use QPSK.png>
-Package pdftex.def Info: QPSK.png  used on input line 98.
+Package pdftex.def Info: QPSK.png  used on input line 99.
 (pdftex.def)             Requested size: 469.75827pt x 307.16438pt.
 <64QAM.png, id=34, 867.24pt x 433.62pt>
 File: 64QAM.png Graphic file (type png)
 <use 64QAM.png>
-Package pdftex.def Info: 64QAM.png  used on input line 99.
+Package pdftex.def Info: 64QAM.png  used on input line 100.
 (pdftex.def)             Requested size: 469.75827pt x 307.16438pt.
 
 
-[4 <./QPSK.png> <./64QAM.png>] (./MP1.aux)
+[4 <./QPSK.png> <./64QAM.png>]
+
+[5] (./MP1.aux)
  ***********
 LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2024-05-27>
@@ -631,18 +633,18 @@ Package rerunfilecheck Info: File `MP1.out' has not changed.
 (rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
  ) 
 Here is how much of TeX's memory you used:
- 22522 strings out of 473584
- 409666 string characters out of 5732364
- 1930908 words of memory out of 5000000
- 45057 multiletter control sequences out of 15000+600000
+ 22533 strings out of 473584
+ 409748 string characters out of 5732364
+ 1932908 words of memory out of 5000000
+ 45058 multiletter control sequences out of 15000+600000
  561958 words of font info for 50 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  102i,7n,107p,448b,441s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on MP1.pdf (4 pages, 335827 bytes).
+<c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
+Output written on MP1.pdf (5 pages, 350520 bytes).
 PDF statistics:
- 63 PDF objects out of 1000 (max. 8388607)
- 40 compressed objects within 1 object stream
- 9 named destinations out of 1000 (max. 500000)
+ 83 PDF objects out of 1000 (max. 8388607)
+ 57 compressed objects within 1 object stream
+ 19 named destinations out of 1000 (max. 500000)
  33 words of extra memory for PDF output out of 10000 (max. 10000000)
 

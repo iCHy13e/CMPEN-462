@@ -1,10 +1,10 @@
 # Fdb version 4
-["pdflatex"] 1741021185.64301 "d:/Work Stuff/CODEE/CMPSC-462/MP 1/MP1.tex" "MP1.pdf" "MP1" 1741021187.72142 0
+["pdflatex"] 1741023506.97767 "d:/Work Stuff/CODEE/CMPSC-462/MP 1/MP1.tex" "MP1.pdf" "MP1" 1741023509.0631 0
   "64QAM.png" 1740962716 63872 a0664078aa247fb5590f153458399c1a ""
   "BPSK.png" 1740962676 77782 2ca376a7e3dee4a1e5bc4b70c2130533 ""
-  "MP1.aux" 1741021187 162 59504cb8f8bee0a3f0488d753cb23a1e "pdflatex"
-  "MP1.out" 1741021186 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
-  "MP1.tex" 1741021184 4248 9268e4bcf25b47aa3810c27c492cd391 ""
+  "MP1.aux" 1741023508 162 f0fda7573680236e99560fa2ea99f7ba "pdflatex"
+  "MP1.out" 1741023508 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "MP1.tex" 1741023505 6170 750d37d1bd529c0eaa216089d33a5105 ""
   "PIBPSK.png" 1740962685 77521 01fecb8a1929d4a8c47e646f29eeced8 ""
   "QPSK.png" 1740962697 73705 a649d45df852465b6a3e39b47d47ed7b ""
   "c:/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1720491761 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -24,6 +24,7 @@
   "c:/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmtt10.tfm" 1720490963 768 1321e9409b4137d6fb428ac9dc956269 ""
   "c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb" 1720490335 34811 78b52f49e893bcba91bd7581cdc144c0 ""
   "c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb" 1720490335 36299 5f9df58c2139e7edcf37c8fca4bd384d ""
+  "c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb" 1720490335 35469 dcf3a5f2fc1862f5952e3ee5eb1d98c4 ""
   "c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb" 1720490335 35752 024fb6c41858982481f6968b5fc26508 ""
   "c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb" 1720490335 31099 342ef5a582aacbd3346f3cf4579679fa ""
   "c:/texlive/2024/texmf-dist/tex/context/base/mkii/supp-pdf.mkii" 1720493012 71627 94eb9990bed73c364d7f53f960cc8c5b ""
@@ -156,7 +157,7 @@
   "c:/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1720495127 5529063 cfc6ac06dcdedd52c5bb88c09e36a956 ""
   "c:/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1720495418 8239197 32811ee574d0ff0e4437026275615a6b ""
   "c:/texlive/2024/texmf.cnf" 1720495101 713 e69b156964470283e0530f5060668171 ""
-  "d:/Work Stuff/CODEE/CMPSC-462/MP 1/MP1.tex" 1741021184 4248 9268e4bcf25b47aa3810c27c492cd391 ""
+  "d:/Work Stuff/CODEE/CMPSC-462/MP 1/MP1.tex" 1741023505 6170 750d37d1bd529c0eaa216089d33a5105 ""
   (generated)
   "MP1.aux"
   "MP1.log"
