@@ -1,0 +1,76 @@
+\documentclass[letterpaper, 11pt]{article}
+
+\usepackage{tikz, listings, comment}
+\usepackage[fleqn]{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\usepackage{fancyhdr, hyperref, pdfpages}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% Define a custom style for listings
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   % Set background color for the code block
+    commentstyle=\color{codegreen},       % Set color for comments
+    keywordstyle=\color{magenta},         % Set color for keywords
+    numberstyle=\tiny\color{codegray},    % Set style for line numbers
+    stringstyle=\color{codepurple},       % Set color for strings
+    basicstyle=\ttfamily\footnotesize,    % Set basic style for the code
+    breakatwhitespace=false,              % Do not break lines at whitespace
+    breaklines=true,                      % Allow breaking of lines
+    captionpos=b,                         % Set caption position to bottom
+    keepspaces=true,                      % Keep spaces in text
+    %numbers=left,                         % Display line numbers on the left
+    numbersep=5pt,                        % Set distance between line numbers and code
+    showspaces=false,                     % Do not show spaces
+    showstringspaces=false,               % Do not show spaces in strings
+    showtabs=false,                       % Do not show tabs
+    tabsize=2                             % Set tab size to 2 spaces
+}
+
+\lstset{style=mystyle}
+\lstset{morekeywords={CA:TRUE, 02:6B:11:F3:3A:44:F1:BC:AC:39:9B:A2:0E:1A:35:B3:5A:B7:9F:FC, Exponent: 65537}}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    }
+
+% Disable page numbers
+\pagestyle{empty}
+
+%Basic Variables (Modify as required per homework)
+\def\class{CompEn 462}
+\def\homeworkNumber{2a}
+\def\date{04.13.2025}
+\def\professor{Mark Mahon}
+
+%Code to generate new page for problem
+\newcounter{problemId}
+\stepcounter{problemId}
+\def\newproblem{\clearpage\newpage\stepcounter{problemId}}
+
+%Custom Section Header Command
+\newcommand{\secHeader}[1]{\vspace{2mm} \noindent \textbf{#1:}\vspace{-4mm}}
+
+\graphicspath{{D:/Work Stuff/CODEE/CMPSC-462/MP2a/Graphics/}}
+\lstset{inputpath={D:/Work Stuff/CODEE/CMPSC-462/MP2a/Code/}}
+
+\begin{document}
+%Title page
+\hfill
+\newline
+Name: Justin Ngo
+\\PSU ID: jvn5439
+\\Professor: \professor
+\\Class: \class
+\\Lab: \homeworkNumber
+\\Date: \date
+
+
+\end{document}
