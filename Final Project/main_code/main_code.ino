@@ -7,7 +7,7 @@
 
 // File paths
 #define KNOWN_DEVICES_FILE "/known_devices.json"
-#define LEARNING_DURATION 300000  // 5 minutes in ms
+#define LEARNING_DURATION 60000  // 1 minutes in ms
 
 // Struct to hold MAC addresses and tracking data
 struct DeviceInfo {
@@ -50,8 +50,7 @@ const char *password = "44WVFXf5";  // i trust that this leak isn't a big deal
 // Function to convert MAC to String
 String macToString(const uint8_t *mac) {
   char buf[20];
-  snprintf(buf, sizeof(buf), "%02X:%02X:%02X:%02X:%02X:%02X",
-           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  snprintf(buf, sizeof(buf), "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
   return String(buf);
 }
 
@@ -173,9 +172,7 @@ void checkForSpoofing(const uint8_t *mac, int rssi) {
   for (const auto &observed : observedDevices) {
     if (abs(rssi - observed.avgRSSI) < RSSI_VARIATION_THRESHOLD && memcmp(mac, observed.mac, 6) != 0 && (currentTime - observed.lastSeen) < TIME_WINDOW) {
       Serial.printf("\nALERT: Potential MAC randomization detected!\n");
-      Serial.printf("Current: %s, Previous: %s\n",
-                    macToString(mac).c_str(),
-                    macToString(observed.mac).c_str());
+      Serial.printf("Current: %s, Previous: %s\n", macToString(mac).c_str(), macToString(observed.mac).c_str());
     }
   }
 }
@@ -191,24 +188,21 @@ void sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
 
   if (learningMode) {
     updateObservedDevices(srcMAC, rssi);
+    // Print during active window
+      const char *pktType = (type == WIFI_PKT_MGMT) ? "MGMT" : "DATA";
+      Serial.printf("%s - MAC: %s RSSI: %d dBm\n", pktType, macToString(srcMAC).c_str(), rssi);
   } else {
     checkForSpoofing(srcMAC, rssi);
   }
+} 
 
-  // Print during active window
-  if (isPrinting) {
-    const char *pktType = (type == WIFI_PKT_MGMT) ? "MGMT" : "DATA";
-    Serial.printf("%s - MAC: %s RSSI: %d dBm\n",
-                  pktType, macToString(srcMAC).c_str(), rssi);
-  }
-}
 
 void setup() {
   Serial.begin(115200);
   delay(2000);
 
-  // Initialize filesystem
-  if (!SPIFFS.begin(true)) {  // true = format if mount fails
+  // Initialize filesystem format if mount fails
+  if (!SPIFFS.begin(true)) {
     Serial.println("SPIFFS Mount Failed, attempting to format...");
     if (SPIFFS.format()) {
       Serial.println("SPIFFS formatted successfully");
@@ -247,7 +241,7 @@ void setup() {
   if (knownDevices.empty()) {
     learningMode = true;
     learningStartTime = millis();
-    Serial.println("Starting 5-minute learning mode...");
+    Serial.println("Starting 1-minute learning mode...");
   } else {
     learningMode = false;
     Serial.println("Known devices loaded. Starting monitoring mode.");
@@ -291,11 +285,5 @@ void loop() {
     if (learningMode) {
       Serial.printf("\nLearning mode - %d devices observed\n", observedDevices.size());
     }
-    Serial.println("Starting packet capture...");
-  }
-
-  if (isPrinting && currentTime - lastPrintTime >= printDuration) {
-    isPrinting = false;
-    Serial.println("Stopping packet capture...");
   }
 }
