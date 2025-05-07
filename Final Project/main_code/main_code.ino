@@ -1,40 +1,27 @@
 #include <WiFi.h>
 #include "esp_wifi.h" // Include ESP-IDF WiFi header for promiscuous functions
 
+// Define your AP's IP address
+const uint8_t AP_IP[4] = {172, 16, 201, 1};
+
 // Callback function to handle received packets
 void promiscuousCallback(void *buf, wifi_promiscuous_pkt_type_t type) {
-
-  Serial.println("Packet received!");
-
-  if (type == WIFI_PKT_MGMT) { // Only process management packets
+  if (type == WIFI_PKT_MGMT || type == WIFI_PKT_CTRL || type == WIFI_PKT_DATA) {
     wifi_promiscuous_pkt_t *packet = (wifi_promiscuous_pkt_t *)buf;
-    uint8_t *payload = packet->payload;
 
     // Extract RSSI (signal strength)
     int rssi = packet->rx_ctrl.rssi;
 
-    // Extract BSSID (MAC address of the access point)
-    char bssid[18];
-    snprintf(bssid, sizeof(bssid), "%02X:%02X:%02X:%02X:%02X:%02X",
-             payload[10], payload[11], payload[12], payload[13], payload[14], payload[15]);
-
-    // Extract SSID (network name) from the beacon frame
-    int ssidLength = payload[37]; // SSID length is at byte 37
-    char ssid[33]; // SSID max length is 32 characters + null terminator
-    if (ssidLength > 0 && ssidLength <= 32) {
-      memcpy(ssid, &payload[38], ssidLength);
-      ssid[ssidLength] = '\0'; // Null-terminate the SSID string
-    } else {
-      strcpy(ssid, "Unknown");
-    }
-
-    // Print connection information
-    Serial.printf("SSID: %s, BSSID: %s, RSSI: %d dBm\n", ssid, bssid, rssi);
+    // Print packet type and RSSI
+    const char *typeStr = (type == WIFI_PKT_MGMT) ? "Management" :
+                          (type == WIFI_PKT_CTRL) ? "Control" :
+                          "Data";
+    Serial.printf("Packet Type: %s, RSSI: %d dBm\n", typeStr, rssi);
   }
 }
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   delay(2000);
 
   // Initialize WiFi in station mode
@@ -42,10 +29,20 @@ void setup() {
 
   // Set WiFi to promiscuous mode
   esp_wifi_set_promiscuous(true);
-  wifi_promiscuous_filter_t filter = {};
-  esp_wifi_set_promiscuous_filter(&filter); // No filter, capture all packets
-  esp_err_t result = esp_wifi_set_promiscuous_rx_cb(promiscuousCallback);
 
+  // Configure filter to capture packets to/from AP_IP
+  wifi_promiscuous_filter_t filter = {};
+  filter.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA; // Filter management and data packets
+
+  esp_err_t result = esp_wifi_set_promiscuous_filter(&filter);
+  if (result != ESP_OK) {
+    Serial.printf("Failed to set promiscuous filter. Error code: %d\n", result);
+    return;
+  } else {
+    Serial.println("Promiscuous filter set successfully.");
+  }
+
+  result = esp_wifi_set_promiscuous_rx_cb(promiscuousCallback);
   if (result == ESP_OK) {
     Serial.println("ESP32 is now in promiscuous mode.");
   } else {
