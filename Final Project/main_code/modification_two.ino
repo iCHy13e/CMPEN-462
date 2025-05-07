@@ -1,28 +1,29 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include "esp_wifi.h"
+#include <SPIFFS.h>
+#include <ArduinoJson.h>
+
+// File paths
+#define KNOWN_DEVICES_FILE "/known_devices.json"
+#define LEARNING_DURATION 300000 // 5 minutes in ms
 
 // Struct to hold MAC addresses and tracking data
 struct DeviceInfo {
   uint8_t mac[6];
-  int rssi;
+  int avg_rssi;
   unsigned long lastSeen;
   int packetCount;
 };
 
-// Array of ignored MAC addresses
-DeviceInfo ignoredMACs[] = {
-  {{0x84, 0x23, 0x88, 0x7B, 0x7E, 0x11}, 0, 0, 0}, // Ruckus Wireless AP
-  {{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, 0, 0, 0}  // Broadcast address
-};
+// Global variables
+std::vector<DeviceInfo> knownDevices;
+std::vector<DeviceInfo> observedDevices;
+bool learningMode = true;
+unsigned long learningStartTime = 0;
 
-// Known legitimate devices (you should populate this with your network's actual devices)
-DeviceInfo knownDevices[] = {
-  {{0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC}, 0, 0, 0} // Example known device
-};
-
-// MAC address of the access point
-const uint8_t AP_BSSID[6] = {0x84, 0x23, 0x88, 0x7B, 0x90, 0xA0};
+// AP MAC address
+const uint8_t AP_BSSID[6] = {0x84, 0x23, 0x88, 0x7b, 0x90, 0xa0};
 
 // List to track recently seen devices
 #define MAX_DEVICES 50
