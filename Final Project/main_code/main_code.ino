@@ -1,19 +1,124 @@
 #include <Arduino.h>
 #include <WiFi.h>
-#include "esp_wifi.h" // Include ESP-IDF WiFi header for promiscuous functions
+#include "esp_wifi.h"
+#include <SPIFFS.h>
+#include <ArduinoJson.h>
+#include <vector>
 
-// Struct to hold MAC addresses
-struct IgnoredMAC {
+// File paths
+#define KNOWN_DEVICES_FILE "/known_devices.json"
+#define LEARNING_DURATION 300000 // 5 minutes in ms
+
+// Struct to hold MAC addresses and tracking data
+struct DeviceInfo {
   uint8_t mac[6];
+  int avgRSSI;
+  unsigned long lastSeen;
+  int packetCount;
 };
 
-// Array of ignored MAC addresses
-IgnoredMAC ignoredMACs[] = {
-  {{0x84, 0x23, 0x88, 0x7B, 0x7E, 0x11}}, // Ruckus Wireless, likely another AP on the network
-  {{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}}  // Broadcast address, don't need to monitor this
+// Global variables
+std::vector<DeviceInfo> knownDevices;
+std::vector<DeviceInfo> observedDevices;
+bool learningMode = true;
+unsigned long learningStartTime = 0;
+
+// AP MAC address
+const uint8_t AP_BSSID[6] = {0x84, 0x23, 0x88, 0x7B, 0x90, 0xA0};
+
+// Ignored MACs (AP itself and broadcast)
+const DeviceInfo ignoredMACs[] = {
+  {{0x84, 0x23, 0x88, 0x7B, 0x7E, 0x11}, 0, 0, 0}, // Ruckus Wireless AP
+  {{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, 0, 0, 0}  // Broadcast address
 };
 
-// Function to check if a MAC address matches any ignored MAC
+// Spoofing detection thresholds
+const int MAC_CHANGE_THRESHOLD = 3;         // Number of MAC changes to trigger alert
+const unsigned long TIME_WINDOW = 60000;    // 60 seconds for change detection
+const int RSSI_VARIATION_THRESHOLD = 15;    // Max expected RSSI variation for same device
+
+// Timing variables
+unsigned long lastPrintTime = 0;
+const unsigned long printDuration = 3000;   // 3 seconds
+const unsigned long cycleDuration = 10000;  // 10 seconds
+bool isPrinting = false;
+
+// WiFi credentials not sure if it's actually necessary for the esp32 to connect to the network but it does just in case
+const char *ssid = "Parkway Plaza Dojo";
+const char *password = "44WVFXf5"; // i trust that this leak isn't a big deal 
+
+// Function to convert MAC to String
+String macToString(const uint8_t* mac) {
+  char buf[20];
+  snprintf(buf, sizeof(buf), "%02X:%02X:%02X:%02X:%02X:%02X", 
+           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  return String(buf);
+}
+
+// Save known devices to SPIFFS
+void saveKnownDevices() {
+  File file = SPIFFS.open(KNOWN_DEVICES_FILE, FILE_WRITE);
+  if (!file) {
+    Serial.println("Failed to create file");
+    return;
+  }
+
+  JsonDocument doc(1024);
+  JsonArray devices = doc.createNestedArray("devices");
+
+  for (const auto& device : knownDevices) {
+    JsonObject dev = devices.createNestedObject();
+    dev["mac"] = macToString(device.mac);
+    dev["avgRSSI"] = device.avgRSSI;
+    dev["packetCount"] = device.packetCount;
+  }
+
+  if (serializeJson(doc, file) == 0) {
+    Serial.println("Failed to write file");
+  }
+  file.close();
+}
+
+// Load known devices from SPIFFS
+void loadKnownDevices() {
+  if (!SPIFFS.exists(KNOWN_DEVICES_FILE)) {
+    Serial.println("No known devices file found - starting in learning mode");
+    return;
+  }
+
+  File file = SPIFFS.open(KNOWN_DEVICES_FILE, FILE_READ);
+  if (!file) {
+    Serial.println("Failed to open file");
+    return;
+  }
+
+  JsonDocument doc(1024);
+  DeserializationError error = deserializeJson(doc, file);
+  if (error) {
+    Serial.println("Failed to parse file");
+    file.close();
+    return;
+  }
+
+  knownDevices.clear();
+  for (JsonObject dev : doc["devices"].as<JsonArray>()) {
+    const char* macStr = dev["mac"];
+    uint8_t mac[6];
+    sscanf(macStr, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", 
+           &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
+    
+    DeviceInfo device;
+    memcpy(device.mac, mac, 6);
+    device.avgRSSI = dev["avgRSSI"];
+    device.packetCount = dev["packetCount"];
+    device.last_seen = 0;
+    knownDevices.push_back(device);
+  }
+  file.close();
+  Serial.printf("Loaded %d known devices\n", knownDevices.size());
+}
+
+// Check if MAC should be ignored
 bool isIgnoredMAC(const uint8_t *mac) {
   for (const auto &ignored : ignoredMACs) {
     if (memcmp(mac, ignored.mac, 6) == 0) {
@@ -23,56 +128,80 @@ bool isIgnoredMAC(const uint8_t *mac) {
   return false;
 }
 
-// IP and MAC address for access point
-const uint8_t AP_IP[4] = {172, 16, 201, 1};
-const uint8_t AP_BSSID[6] = {0x84, 0x23, 0x88, 0x79, 0x44, 0xB1}; // first 3 bytes match the other AP above
-
-// Timing variables
-unsigned long lastPrintTime = 0;
-unsigned long printDuration = 3000; // 3 seconds
-unsigned long cycleDuration = 10000; // 10 seconds
-bool isPrinting = false;
-
-// Function to handle packet info while in promiscuous mode
-void sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
-  wifi_promiscuous_pkt_t *packet = (wifi_promiscuous_pkt_t *)buf;
-  uint8_t *payload = packet->payload;
+// Update or add device to observed list
+void updateObservedDevices(const uint8_t *mac, int rssi) {
+  for (auto &device : observedDevices) {
+    if (memcmp(device.mac, mac, 6) == 0) {
+      // Update existing device
+      device.avgRSSI = (device.avgRSSI * device.packetCount + rssi) / (device.packetCount + 1);
+      device.packetCount++;
+      device.last_seen = millis();
+      return;
+    }
+  }
   
-  // Extract packet information
-  int rssi = packet->rx_ctrl.rssi;
-  uint8_t *srcMAC = &payload[10]; // Source MAC starts at byte 10
-  uint8_t *dstMAC = &payload[4];  // Destination MAC starts at byte 4
+  // Add new device
+  DeviceInfo newDevice;
+  memcpy(newDevice.mac, mac, 6);
+  newDevice.avgRSSI = rssi;
+  newDevice.packetCount = 1;
+  newDevice.last_seen = millis();
+  observedDevices.push_back(newDevice);
+}
+
+// Check for MAC spoofing
+void checkForSpoofing(const uint8_t *mac, int rssi) {
+  unsigned long currentTime = millis();
   
-  // For readability only print for 3 seconds every 10 seconds
-  if (!isPrinting) {
+  // Check if MAC matches AP's MAC
+  if (memcmp(mac, AP_BSSID, 6) == 0) {
+    Serial.println("\nALERT: Device using AP's MAC address detected!");
     return;
   }
+  
+  // Check against known devices
+  for (const auto &known : knownDevices) {
+    if (memcmp(mac, known.mac, 6) == 0) {
+      if (abs(rssi - known.avgRSSI) > RSSI_VARIATION_THRESHOLD) {
+        Serial.printf("\nALERT: Known device %s shows abnormal RSSI change!\n", macToString(mac).c_str());
+      }
+      return;
+    }
+  }
+  
+  // Check for MAC randomization
+  for (const auto &observed : observedDevices) {
+    if (abs(rssi - observed.avgRSSI) < RSSI_VARIATION_THRESHOLD &&
+        memcmp(mac, observed.mac, 6) != 0 &&
+        (currentTime - observed.last_seen) < TIME_WINDOW) {
+      Serial.printf("\nALERT: Potential MAC randomization detected!\n");
+      Serial.printf("Current: %s, Previous: %s\n", 
+                   macToString(mac).c_str(), 
+                   macToString(observed.mac).c_str());
+    }
+  }
+}
 
-  // Ignore packets with the specified MAC address
-  if (isIgnoredMAC(srcMAC) || isIgnoredMAC(dstMAC)) {
-    return; 
+// Packet sniffer callback
+void sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
+  wifi_promiscuous_pkt_t *packet = (wifi_promiscuous_pkt_t *)buf;
+  uint8_t *srcMAC = &packet->payload[10];
+  int rssi = packet->rx_ctrl.rssi;
+
+  // Skip ignored MACs
+  if (isIgnoredMAC(srcMAC)) return;
+
+  if (learningMode) {
+    updateObservedDevices(srcMAC, rssi);
+  } else {
+    checkForSpoofing(srcMAC, rssi);
   }
 
-  // Format Management packets
-  if (type == WIFI_PKT_MGMT) { 
-    Serial.printf("Management Packet - RSSI: %d dBm\n", rssi);
-    Serial.printf("Source MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
-                  srcMAC[0], srcMAC[1], srcMAC[2], srcMAC[3], srcMAC[4], srcMAC[5]);
-    Serial.printf("Destination MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
-                  dstMAC[0], dstMAC[1], dstMAC[2], dstMAC[3], dstMAC[4], dstMAC[5]);
-  } 
-  // Format Data packets
-  else if (type == WIFI_PKT_DATA) { 
-    // Check if the packet contains an IP header (Ethernet II frame with IPv4)
-    if (payload[12] == 0x08 && payload[13] == 0x00) { // EtherType == 0x0800 (IPv4)
-      // Extract source and destination IP addresses from the IP header
-      uint8_t *srcIP = &payload[26]; // Source IP starts at byte 26
-      uint8_t *dstIP = &payload[30]; // Destination IP starts at byte 30
-
-      Serial.printf("Data Packet - RSSI: %d dBm\n", rssi);
-      Serial.printf("Source IP: %d.%d.%d.%d\n", srcIP[0], srcIP[1], srcIP[2], srcIP[3]);
-      Serial.printf("Destination IP: %d.%d.%d.%d\n", dstIP[0], dstIP[1], dstIP[2], dstIP[3]);
-    }
+  // Print during active window
+  if (isPrinting) {
+    const char* pktType = (type == WIFI_PKT_MGMT) ? "MGMT" : "DATA";
+    Serial.printf("%s - MAC: %s RSSI: %d dBm\n", 
+                 pktType, macToString(srcMAC).c_str(), rssi);
   }
 }
 
@@ -80,39 +209,83 @@ void setup() {
   Serial.begin(115200);
   delay(2000);
 
-  WiFi.mode(WIFI_MODE_STA); // Initialize WiFi in station mode
-  esp_wifi_set_promiscuous(true); // Set WiFi to promiscuous mode
-
-  // Configure filter to capture packets
-  wifi_promiscuous_filter_t filter = {};
-  filter.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA;
-  esp_err_t result = esp_wifi_set_promiscuous_filter(&filter);
-  if (result != ESP_OK) {
-    Serial.printf("Failed to set promiscuous filter. Error code: %d\n", result);
-    return;
-  } else {
-    Serial.println("Promiscuous filter set successfully.");
+  // Initialize filesystem
+  if (!SPIFFS.begin(true)) {
+    Serial.println("Failed to mount SPIFFS");
+    while(1) delay(1000);
   }
 
-  result = esp_wifi_set_promiscuous_rx_cb(sniffer);
-  if (result == ESP_OK) {
-    Serial.println("ESP32 is now in promiscuous mode.");
-  } else {
-    Serial.printf("Failed to enable promiscuous mode. Error code: %d\n", result);
+  // Connect to WiFi
+  Serial.println("Connecting to WiFi...");
+  WiFi.begin(ssid, password);
+  
+  unsigned long startTime = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000) {
+    delay(500);
+    Serial.print(".");
   }
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("\nConnection Failed! Restarting...");
+    ESP.restart();
+  }
+  
+  Serial.println("\nConnected!");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+
+  // Load known devices or start learning
+  loadKnownDevices();
+  if (knownDevices.empty()) {
+    learningMode = true;
+    learningStartTime = millis();
+    Serial.println("Starting 5-minute learning mode...");
+  } else {
+    learningMode = false;
+    Serial.println("Known devices loaded. Starting monitoring mode.");
+  }
+
+  // Setup promiscuous mode
+  WiFi.mode(WIFI_MODE_STA);
+  esp_wifi_set_promiscuous(true);
+  
+  wifi_promiscuous_filter_t filter = {
+    .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA
+  };
+  
+  esp_wifi_set_promiscuous_filter(&filter);
+  esp_wifi_set_promiscuous_rx_cb(sniffer);
 }
 
 void loop() {
   unsigned long currentTime = millis();
 
-  // Check if we are in the printing window
+  // Handle WiFi connection
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi disconnected. Reconnecting...");
+    WiFi.reconnect();
+    delay(5000);
+    return;
+  }
+
+  // Handle learning mode timeout
+  if (learningMode && currentTime - learningStartTime > LEARNING_DURATION) {
+    learningMode = false;
+    knownDevices = observedDevices;
+    saveKnownDevices();
+    Serial.printf("\nLearning complete. Saved %d known devices.\n", knownDevices.size());
+  }
+
+  // Manage print timing
   if (currentTime - lastPrintTime >= cycleDuration) {
     lastPrintTime = currentTime;
-    isPrinting = true; // Enable printing for the next 3 seconds
+    isPrinting = true;
+    if (learningMode) {
+      Serial.printf("\nLearning mode - %d devices observed\n", observedDevices.size());
+    }
     Serial.println("Starting packet capture...");
   }
 
-  // Disable printing after the 3-second window
   if (isPrinting && currentTime - lastPrintTime >= printDuration) {
     isPrinting = false;
     Serial.println("Stopping packet capture...");
