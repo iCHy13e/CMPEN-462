@@ -63,11 +63,11 @@ void saveKnownDevices() {
     return;
   }
 
-  JsonDocument doc(1024);
-  JsonArray devices = doc.createNestedArray("devices");
+  JsonDocument doc;
+  JsonArray devices = doc["devices"].to<JsonArray>();
 
   for (const auto& device : knownDevices) {
-    JsonObject dev = devices.createNestedObject();
+    JsonObject dev = devices.add<JsonObject>();
     dev["mac"] = macToString(device.mac);
     dev["avgRSSI"] = device.avgRSSI;
     dev["packetCount"] = device.packetCount;
@@ -92,7 +92,7 @@ void loadKnownDevices() {
     return;
   }
 
-  JsonDocument doc(1024);
+  JsonDocument doc;
   DeserializationError error = deserializeJson(doc, file);
   if (error) {
     Serial.println("Failed to parse file");
@@ -111,7 +111,7 @@ void loadKnownDevices() {
     memcpy(device.mac, mac, 6);
     device.avgRSSI = dev["avgRSSI"];
     device.packetCount = dev["packetCount"];
-    device.last_seen = 0;
+    device.lastSeen = 0;
     knownDevices.push_back(device);
   }
   file.close();
@@ -135,7 +135,7 @@ void updateObservedDevices(const uint8_t *mac, int rssi) {
       // Update existing device
       device.avgRSSI = (device.avgRSSI * device.packetCount + rssi) / (device.packetCount + 1);
       device.packetCount++;
-      device.last_seen = millis();
+      device.lastSeen = millis();
       return;
     }
   }
@@ -145,7 +145,7 @@ void updateObservedDevices(const uint8_t *mac, int rssi) {
   memcpy(newDevice.mac, mac, 6);
   newDevice.avgRSSI = rssi;
   newDevice.packetCount = 1;
-  newDevice.last_seen = millis();
+  newDevice.lastSeen = millis();
   observedDevices.push_back(newDevice);
 }
 
@@ -173,7 +173,7 @@ void checkForSpoofing(const uint8_t *mac, int rssi) {
   for (const auto &observed : observedDevices) {
     if (abs(rssi - observed.avgRSSI) < RSSI_VARIATION_THRESHOLD &&
         memcmp(mac, observed.mac, 6) != 0 &&
-        (currentTime - observed.last_seen) < TIME_WINDOW) {
+        (currentTime - observed.lastSeen) < TIME_WINDOW) {
       Serial.printf("\nALERT: Potential MAC randomization detected!\n");
       Serial.printf("Current: %s, Previous: %s\n", 
                    macToString(mac).c_str(), 
