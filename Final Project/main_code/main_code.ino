@@ -35,7 +35,7 @@ const DeviceInfo ignoredMACs[] = {
 // Spoofing detection thresholds
 const int MAC_CHANGE_THRESHOLD = 3;       // Number of MAC changes to trigger alert
 const unsigned long TIME_WINDOW = 60000;  // 60 seconds for change detection
-const int RSSI_VARIATION_THRESHOLD = 15;  // Max expected RSSI variation for same device
+const int RSSI_VARIATION_THRESHOLD = 10;  // Max expected RSSI variation for same device
 
 // Timing variables
 unsigned long lastPrintTime = 0;
@@ -76,6 +76,34 @@ void saveKnownDevices() {
     Serial.println("Failed to write file");
   }
   file.close();
+}
+
+void readKnownDevicesFile() {
+  // Open the file for reading
+  File file = SPIFFS.open("/known_devices.json", "r");
+  
+  if (!file) {
+    Serial.println("Failed to open known_devices.json");
+    return;
+  }
+  
+  Serial.println("Contents of known_devices.json:");
+  
+  // Read the entire file content
+  String fileContent = file.readString();
+  file.close();
+  
+  // Parse and reserialize the JSON for pretty printing
+  StaticJsonDocument<1024> doc;
+  DeserializationError error = deserializeJson(doc, fileContent);
+  if (error) {
+    Serial.println("Failed to parse JSON content");
+    return;
+  }
+  
+  String formattedJson;
+  serializeJsonPretty(doc, formattedJson);
+  Serial.println(formattedJson);
 }
 
 // Load known devices from SPIFFS
@@ -162,7 +190,7 @@ void checkForSpoofing(const uint8_t *mac, int rssi) {
   for (const auto &known : knownDevices) {
     if (memcmp(mac, known.mac, 6) == 0) {
       if (abs(rssi - known.avgRSSI) > RSSI_VARIATION_THRESHOLD) {
-        Serial.printf("\nALERT: Known device %s shows abnormal RSSI change!\n", macToString(mac).c_str());
+        Serial.printf("\nALERT: Known device %s shows abnormal RSSI change! Current RSSI: %d dBm, Known Avg RSSI: %d dBm\n", macToString(mac).c_str(), rssi, known.avgRSSI);
       }
       return;
     }
@@ -215,7 +243,9 @@ void setup() {
       while (1) delay(1000);
     }
   }
+  
   Serial.println("SPIFFS mounted successfully");
+  readKnownDevicesFile();  // Print contents to serial for user to check
 
   // Connect to WiFi
   Serial.println("Connecting to WiFi...");
