@@ -1,8 +1,31 @@
+#include <Arduino.h>
 #include <WiFi.h>
 #include "esp_wifi.h" // Include ESP-IDF WiFi header for promiscuous functions
 
-// Define your AP's IP address
+// Struct to hold MAC addresses
+struct IgnoredMAC {
+  uint8_t mac[6];
+};
+
+// Array of ignored MAC addresses
+IgnoredMAC ignoredMACs[] = {
+  {{0x84, 0x23, 0x88, 0x7B, 0x7E, 0x11}},
+  {{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}}
+};
+
+// Function to check if a MAC address matches any ignored MAC
+bool isIgnoredMAC(const uint8_t *mac) {
+  for (const auto &ignored : ignoredMACs) {
+    if (memcmp(mac, ignored.mac, 6) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// IP and MAC address for access point
 const uint8_t AP_IP[4] = {172, 16, 201, 1};
+const uint8_t AP_BSSID[6] = {0x84, 0x23, 0x88, 0x79, 0x44, 0xB1};
 
 // Timing variables
 unsigned long lastPrintTime = 0;
@@ -22,11 +45,16 @@ void promiscuousCallback(void *buf, wifi_promiscuous_pkt_type_t type) {
   // Extract RSSI (signal strength)
   int rssi = packet->rx_ctrl.rssi;
 
-  if (type == WIFI_PKT_MGMT) { // Management packets
-    // Extract MAC addresses (source and destination)
-    uint8_t *srcMAC = &payload[10]; // Source MAC starts at byte 10
-    uint8_t *dstMAC = &payload[4];  // Destination MAC starts at byte 4
+  // Extract MAC addresses (source and destination)
+  uint8_t *srcMAC = &payload[10]; // Source MAC starts at byte 10
+  uint8_t *dstMAC = &payload[4];  // Destination MAC starts at byte 4
 
+  // Ignore packets with the specified MAC address
+  if (isIgnoredMAC(srcMAC) || isIgnoredMAC(dstMAC)) {
+    return; // Skip processing this packet
+  }
+
+  if (type == WIFI_PKT_MGMT) { // Management packets
     Serial.printf("Management Packet - RSSI: %d dBm\n", rssi);
     Serial.printf("Source MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
                   srcMAC[0], srcMAC[1], srcMAC[2], srcMAC[3], srcMAC[4], srcMAC[5]);
@@ -50,11 +78,9 @@ void setup() {
   Serial.begin(115200);
   delay(2000);
 
-  // Initialize WiFi in station mode
-  WiFi.mode(WIFI_MODE_STA);
-
-  // Set WiFi to promiscuous mode
-  esp_wifi_set_promiscuous(true);
+  esp_wifi_set_channel(11, WIFI_SECOND_CHAN_NONE);  // Lock to channel 11
+  WiFi.mode(WIFI_MODE_STA); // Initialize WiFi in station mode
+  esp_wifi_set_promiscuous(true); // Set WiFi to promiscuous mode
 
   // Configure filter to capture packets
   wifi_promiscuous_filter_t filter = {};
