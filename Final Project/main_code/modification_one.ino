@@ -33,7 +33,7 @@ unsigned long printDuration = 3000; // 3 seconds
 unsigned long cycleDuration = 10000; // 10 seconds
 bool isPrinting = false;
 
-// Function to handle packet info while in promiscuous mode
+// Function to handle packet info processing while in promiscuous mode
 void sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
   wifi_promiscuous_pkt_t *packet = (wifi_promiscuous_pkt_t *)buf;
   uint8_t *payload = packet->payload;
@@ -50,11 +50,6 @@ void sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
 
   // Ignore packets with the specified MAC address
   if (isIgnoredMAC(srcMAC) || isIgnoredMAC(dstMAC)) {
-    return;
-  }
-
-  if (packet->rx_ctrl.rx_state == 1) { // Encrypted packet
-    Serial.println("Encrypted Data Packet - Skipping");
     return;
   }
 
@@ -86,7 +81,7 @@ void sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
       Serial.printf("Source IP: %d.%d.%d.%d\n", srcIP[0], srcIP[1], srcIP[2], srcIP[3]);
       Serial.printf("Destination IP: %d.%d.%d.%d\n", dstIP[0], dstIP[1], dstIP[2], dstIP[3]);
     } else {
-      Serial.println("Non-IPv4 Data Packet");
+      Serial.println("Non-IPv4 Data Packet, likely encrypted.");
     }
   }
 }
@@ -108,6 +103,19 @@ void setup() {
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
   
+  // Try for 10 seconds, then timeout
+  while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("\nConnection Failed!");
+    // Optional: Restart ESP32 or enter deep sleep
+    ESP.restart();
+  } else {
+    Serial.println("\nConnected!");
+  }
   
   WiFi.mode(WIFI_MODE_STA); // Initialize WiFi in station mode
   esp_wifi_set_promiscuous(true); // Set WiFi to promiscuous mode
@@ -133,6 +141,12 @@ void setup() {
 
 void loop() {
   unsigned long currentTime = millis();
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi disconnected. Reconnecting...");
+    WiFi.reconnect();
+    delay(5000); // Wait before retrying
+  }
 
   // Check if we are in the printing window
   if (currentTime - lastPrintTime >= cycleDuration) {
