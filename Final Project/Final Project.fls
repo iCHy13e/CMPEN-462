@@ -226,6 +226,8 @@ INPUT c:/texlive/2024/texmf-dist/tex/latex/eso-pic/eso-pic.sty
 INPUT c:/texlive/2024/texmf-dist/tex/latex/pdfpages/pppdftex.def
 INPUT c:/texlive/2024/texmf-dist/tex/latex/pdfpages/pppdftex.def
 INPUT c:/texlive/2024/texmf-dist/tex/latex/pdfpages/pppdftex.def
+INPUT c:/texlive/2024/texmf-dist/tex/latex/float/float.sty
+INPUT c:/texlive/2024/texmf-dist/tex/latex/float/float.sty
 INPUT c:/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 INPUT c:/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 INPUT ./Final Project.aux
@@ -256,6 +258,11 @@ INPUT c:/texlive/2024/texmf-dist/tex/latex/graphics/lscape.sty
 INPUT c:/texlive/2024/texmf-dist/tex/latex/graphics/lscape.sty
 INPUT c:/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map
 INPUT c:/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm
+INPUT ./Diagram.png
+INPUT ./Diagram.png
+INPUT ./Diagram.png
+INPUT ./Diagram.png
+INPUT ./Diagram.png
 INPUT Final Project.aux
 INPUT ./Final Project.out
 INPUT ./Final Project.out

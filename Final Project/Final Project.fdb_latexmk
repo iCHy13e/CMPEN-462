@@ -1,8 +1,9 @@
 # Fdb version 4
-["pdflatex"] 1746670623.75507 "d:/Work Stuff/CODEE/CMPSC-462/Final Project/Final Project.tex" "Final Project.pdf" "Final Project" 1746670625.48315 0
-  "Final Project.aux" 1746670625 162 fa61bf9ecf9314f94d51aa32222a725c "pdflatex"
-  "Final Project.out" 1746670625 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
-  "Final Project.tex" 1746670622 5313 0599832a422eda7e59367456d9cd125a ""
+["pdflatex"] 1746674003.81935 "d:/Work Stuff/CODEE/CMPSC-462/Final Project/Final Project.tex" "Final Project.pdf" "Final Project" 1746674005.56559 0
+  "Diagram.png" 1746673017 49724 8a55330e6190055109a00cf46c6b986e ""
+  "Final Project.aux" 1746674005 352 1575fbccdfc7d87a032e66b3827f36ce "pdflatex"
+  "Final Project.out" 1746674005 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "Final Project.tex" 1746674002 6377 8e66d4b573971cffc2b0b0fe9499eb4d ""
   "c:/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1720491761 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "c:/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm" 1720490963 1328 c834bbb027764024c09d3d2bf908b5f0 ""
   "c:/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmr10.tfm" 1720490963 1296 45809c5a464d5f32c8f98ba97c1bb47f ""
@@ -91,6 +92,7 @@
   "c:/texlive/2024/texmf-dist/tex/latex/eso-pic/eso-pic.sty" 1720491546 11876 6ef493863ae0d7a984706973240c2237 ""
   "c:/texlive/2024/texmf-dist/tex/latex/etoolbox/etoolbox.sty" 1720491564 46845 3b58f70c6e861a13d927bff09d35ecbc ""
   "c:/texlive/2024/texmf-dist/tex/latex/fancyhdr/fancyhdr.sty" 1720491628 18674 2cc1c2f64272f458981b096e7600b014 ""
+  "c:/texlive/2024/texmf-dist/tex/latex/float/float.sty" 1720491728 6749 16d2656a1984957e674b149555f1ea1d ""
   "c:/texlive/2024/texmf-dist/tex/latex/geometry/geometry.sty" 1720491859 41601 9cf6c5257b1bc7af01a58859749dd37a ""
   "c:/texlive/2024/texmf-dist/tex/latex/graphics-cfg/color.cfg" 1720491953 1213 620bba36b25224fa9b7e1ccb4ecb76fd ""
   "c:/texlive/2024/texmf-dist/tex/latex/graphics-cfg/graphics.cfg" 1720491953 1224 978390e9c2234eab29404bc21b268d1e ""
@@ -138,7 +140,7 @@
   "c:/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1720495127 5529063 cfc6ac06dcdedd52c5bb88c09e36a956 ""
   "c:/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1720495418 8239197 32811ee574d0ff0e4437026275615a6b ""
   "c:/texlive/2024/texmf.cnf" 1720495101 713 e69b156964470283e0530f5060668171 ""
-  "d:/Work Stuff/CODEE/CMPSC-462/Final Project/Final Project.tex" 1746670622 5313 0599832a422eda7e59367456d9cd125a ""
+  "d:/Work Stuff/CODEE/CMPSC-462/Final Project/Final Project.tex" 1746674002 6377 8e66d4b573971cffc2b0b0fe9499eb4d ""
   (generated)
   "Final Project.aux"
   "Final Project.log"

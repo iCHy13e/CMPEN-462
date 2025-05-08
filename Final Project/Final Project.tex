@@ -5,6 +5,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{fancyhdr, hyperref, pdfpages}
 \usepackage{xcolor}
+\usepackage{float} % Add this to your preamble if not already included
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
@@ -96,6 +97,23 @@ The main idea behind this project was just to experiment with the ESP32 microcon
     MAC addresses and RSSI of the connections that are made to the access point.
     \item ArduinoJson Library: I used this to maintain the JSON file which stored the known connections that the device learned during its learning phase.
 \end{enumerate}
+
+
+\newpage
+\secHeader{Code Walkthrough}
+\vspace{5mm}
+
+\begin{figure}[H] % Use [H] to force the figure to stay here
+    \centering
+    \includegraphics[width=0.8\textwidth]{Diagram.png}
+    \caption{System Diagram}
+    \label{fig:SystemDiagram}
+\end{figure}
+
+The figure above shows a very general overview of how the system works. The ESP32 detects packets in promiscuous mode which are then processed by the Packet Sniffer function. The MAC 
+Filter removes packets to or from the other access points on the network and also ignores packets sent to FF:FF:FF:FF:FF:FF, which is the broadcast address to prevent the device from
+flooding the storage with unnecessary packets. Depending on what mode the device is currently operating in, the device will either save the packet information to the known\_connections\_file 
+or compare the RSSI of the incoming packet to the RSSI of the other recently received packets to try and determine if it's coming from a spoofed MAC address.
 
 
 \end{document}

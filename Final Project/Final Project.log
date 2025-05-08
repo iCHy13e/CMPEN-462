@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.7.8)  7 MAY 2025 22:17
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.7.8)  7 MAY 2025 23:13
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -495,53 +495,60 @@ File: pppdftex.def 2024/05/29 v0.6a Pdfpages driver for pdfTeX (AM)
 \AM@lof@heading=\toks39
 \c@AM@survey=\count329
 \AM@templatesizebox=\box68
+) (c:/texlive/2024/texmf-dist/tex/latex/float/float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count330
+\float@exts=\toks40
+\float@box=\box69
+\@float@everytoks=\toks41
+\@floatcapt=\box70
 )
-\c@problemId=\count330
+\c@problemId=\count331
  (c:/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2024-05-08 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count331
-\l__pdf_internal_box=\box69
+\l__color_backend_stack_int=\count332
+\l__pdf_internal_box=\box71
 ) (./Final Project.aux)
 \openout1 = `"Final Project.aux"'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 53.
-LaTeX Font Info:    ... okay on input line 53.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 53.
-LaTeX Font Info:    ... okay on input line 53.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 53.
-LaTeX Font Info:    ... okay on input line 53.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 53.
-LaTeX Font Info:    ... okay on input line 53.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 53.
-LaTeX Font Info:    ... okay on input line 53.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 53.
-LaTeX Font Info:    ... okay on input line 53.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 53.
-LaTeX Font Info:    ... okay on input line 53.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 53.
-LaTeX Font Info:    ... okay on input line 53.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 53.
-LaTeX Font Info:    ... okay on input line 53.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 54.
+LaTeX Font Info:    ... okay on input line 54.
  (c:/texlive/2024/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count332
+\scratchcounter=\count333
 \scratchdimen=\dimen282
-\scratchbox=\box70
-\nofMPsegments=\count333
-\nofMParguments=\count334
-\everyMPshowfont=\toks40
-\MPscratchCnt=\count335
+\scratchbox=\box72
+\nofMPsegments=\count334
+\nofMParguments=\count335
+\everyMPshowfont=\toks42
+\MPscratchCnt=\count336
 \MPscratchDim=\dimen283
-\MPnumerator=\count336
-\makeMPintoPDFobject=\count337
-\everyMPtoPDFconversion=\toks41
+\MPnumerator=\count337
+\makeMPintoPDFobject=\count338
+\everyMPtoPDFconversion=\toks43
 ) (c:/texlive/2024/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
  (c:/texlive/2024/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 ))
-\c@lstlisting=\count338
+\c@lstlisting=\count339
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -577,7 +584,7 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-Package hyperref Info: Link coloring OFF on input line 53.
+Package hyperref Info: Link coloring OFF on input line 54.
 (./Final Project.out) (./Final Project.out)
 \@outlinefile=\write5
 \openout5 = `"Final Project.out"'.
@@ -598,7 +605,20 @@ Package pdflscape Info: Auto-detected driver: pdftex on input line 81.
 
 [2]
 
-[3] (./Final Project.aux)
+[3]
+<Diagram.png, id=28, 426.84468pt x 406.51875pt>
+File: Diagram.png Graphic file (type png)
+<use Diagram.png>
+Package pdftex.def Info: Diagram.png  used on input line 108.
+(pdftex.def)             Requested size: 375.80544pt x 357.92989pt.
+
+
+[4
+pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) has been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.119 \end{document}
+                     <./Diagram.png>] (./Final Project.aux)
  ***********
 LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2024-05-27>
@@ -607,18 +627,18 @@ Package rerunfilecheck Info: File `"Final Project".out' has not changed.
 (rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
  ) 
 Here is how much of TeX's memory you used:
- 22474 strings out of 473584
- 409243 string characters out of 5732364
+ 22552 strings out of 473584
+ 410458 string characters out of 5732364
  1932908 words of memory out of 5000000
- 45017 multiletter control sequences out of 15000+600000
+ 45089 multiletter control sequences out of 15000+600000
  558677 words of font info for 38 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 102i,5n,107p,467b,441s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 102i,6n,107p,467b,441s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb>
-Output written on "Final Project.pdf" (3 pages, 39044 bytes).
+Output written on "Final Project.pdf" (4 pages, 76474 bytes).
 PDF statistics:
- 42 PDF objects out of 1000 (max. 8388607)
- 32 compressed objects within 1 object stream
- 10 named destinations out of 1000 (max. 500000)
- 13 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 50 PDF objects out of 1000 (max. 8388607)
+ 37 compressed objects within 1 object stream
+ 12 named destinations out of 1000 (max. 500000)
+ 18 words of extra memory for PDF output out of 10000 (max. 10000000)
 

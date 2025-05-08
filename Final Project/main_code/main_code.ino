@@ -5,7 +5,7 @@
 #include <ArduinoJson.h>
 #include <vector>
 
-// File paths
+// File path
 #define KNOWN_DEVICES_FILE "/known_devices.json"
 #define LEARNING_DURATION 150000  // 2.5 minutes in ms
 
@@ -15,7 +15,7 @@ struct DeviceInfo {
   int avgRSSI;
   unsigned long lastSeen;
   int packetCount;
-  unsigned long lastAlertTime; // New field for cooldown
+  unsigned long lastAlertTime; 
 };
 
 // Global variables
@@ -24,7 +24,7 @@ std::vector<DeviceInfo> observedDevices;
 bool learningMode = true;
 unsigned long learningStartTime = 0;
 unsigned long lastUpdateTime = 0;
-const unsigned long UPDATE_INTERVAL = 60000; // 60 seconds
+const unsigned long UPDATE_INTERVAL = 30000; // 30 seconds
 
 // AP MAC address
 const uint8_t AP_BSSID[6] = { 0x84, 0x23, 0x88, 0x7B, 0x90, 0xA0 };
@@ -39,9 +39,9 @@ const char *ssid = "Parkway Plaza Dojo";
 const char *password = "44WVFXf5";  // i trust that this leak isn't a big deal
 
 // Spoofing detection thresholds
-const int MAC_CHANGE_THRESHOLD = 10;      // Number of MAC changes to trigger alert
 const unsigned long TIME_WINDOW = 30000;  // 30 seconds for change detection
 const int RSSI_VARIATION_THRESHOLD = 25;  // Max expected RSSI variation for same device
+const int RANDOM_MAC_RSSI = 10;           // threshold for random MAC detection calculation
 
 
 // Function to check if a MAC address should be ignored
@@ -57,7 +57,7 @@ bool isIgnoredMAC(const uint8_t *mac) {
   if (mac[0] == 0x84 && mac[1] == 0x23 && mac[2] == 0x88 && mac[3] == 0x7B && mac[4] == 0x90 && mac[5] == 0xA0) { 
     return false;
   } 
-  //Ignore the MAC addresses of other Ruckus Wireless APs
+  //Ignore the MAC addresses of other APs on network
   else if (mac[0] == 0x84 && mac[1] == 0x23 && mac[2] == 0x88) {
     return true;
   }
@@ -201,7 +201,7 @@ void checkForSpoofing(const uint8_t *mac, int rssi) {
 
   // Check for MAC randomization
   for (auto &observed : observedDevices) {
-    if (abs(rssi - observed.avgRSSI) < RSSI_VARIATION_THRESHOLD && memcmp(mac, observed.mac, 6) != 0 && (currentTime - observed.lastSeen) < TIME_WINDOW) {
+    if (abs(rssi - observed.avgRSSI) < RANDOM_MAC_RSSI && memcmp(mac, observed.mac, 6) != 0 && (currentTime - observed.lastSeen) < TIME_WINDOW) {
       if (currentTime - observed.lastAlertTime > TIME_WINDOW) { // Cooldown check
         Serial.printf("\nALERT: Potential MAC randomization detected!");
         Serial.printf("\nCurrent: %s, Previous: %s\n", macToString(mac).c_str(), macToString(observed.mac).c_str());
