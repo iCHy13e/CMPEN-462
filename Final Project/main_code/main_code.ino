@@ -27,7 +27,7 @@ unsigned long learningStartTime = 0;
 unsigned long lastUpdateTime = 0;
 const unsigned long UPDATE_INTERVAL = 30000; // 30 seconds
 
-// AP MAC address
+// AP MAC & IP address
 const uint8_t AP_IP[4] = { 172, 16, 201, 1 };
 const uint8_t AP_BSSID[6] = { 0x84, 0x23, 0x88, 0x7B, 0x90, 0xA0 };
 
@@ -46,7 +46,8 @@ const int RSSI_VARIATION_THRESHOLD = 20;  // Max expected RSSI variation for sam
 const int RANDOM_MAC_RSSI = 15;           // threshold for random MAC detection calculation
 const int MIN_PACKET_COUNT = 5;           // Minimum packets required for randomization check
 const float CONFIDENCE_THRESHOLD = 0.5;   // Minimum confidence required
-
+bool foundAPMAC = false;
+int AVG_AP_RSSI = 0;
 
 
 // Function to check if a MAC address should be ignored
@@ -189,11 +190,11 @@ void updateObservedDevices(const uint8_t *mac, int rssi) {
 void checkForSpoofing(const uint8_t *mac, int rssi) {
   unsigned long currentTime = millis();
 
-  // Check if MAC matches AP's MAC
-  if (memcmp(mac, AP_BSSID, 6) == 0) {
-    Serial.println("\nALERT: Device using AP's MAC address detected!");
+  // Check if MAC matches AP's MAC and RSSI exceeds threshold
+  if (memcmp(mac, AP_BSSID, 6) == 0 && abs(rssi - AVG_AP_RSSI) > RSSI_VARIATION_THRESHOLD) {
+    Serial.printf("\nALERT: Device using AP's MAC address detected with abnormal RSSI! RSSI: %d dBm\n", rssi);
     return;
-  }
+}
 
   // Check known devices for abnormal RSSI change
   for (auto &known : knownDevices) {
@@ -250,6 +251,27 @@ void sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
   }
 }
 
+ // Check if the AP's MAC was detected during learning mode
+void detectAP_MAC() {
+  for (const auto &device : knownDevices) {
+    if (memcmp(device.mac, AP_BSSID, 6) == 0) {
+      foundAPMAC = true;
+      break;
+    }
+  }
+  if (foundAPMAC) {
+    for (const auto &device : knownDevices) {
+      if (memcmp(device.mac, AP_BSSID, 6) == 0) {
+        Serial.printf("AP's MAC address: %s was detected during learning mode. RSSI: %d dBm\n", macToString(device.mac).c_str(), device.avgRSSI);
+        AVG_AP_RSSI = device.avgRSSI;
+        Serial.printf("Average RSSI of AP: %d dBm\n", AVG_AP_RSSI);
+        break;
+      }
+    }
+  } else {
+    Serial.println("AP's MAC address was NOT detected during learning mode.");
+  }
+}
 
 void setup() {
   Serial.begin(115200);
@@ -363,6 +385,8 @@ void loop() {
     } else {
       Serial.println("Your MAC address was NOT detected during learning mode.");
     } 
+    // Check if AP's MAC was detected during learning mode
+    detectAP_MAC();
   } 
    
 
