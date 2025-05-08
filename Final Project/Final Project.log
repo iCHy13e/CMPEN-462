@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.7.8)  7 MAY 2025 23:13
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.7.8)  7 MAY 2025 23:23
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -617,8 +617,18 @@ Package pdftex.def Info: Diagram.png  used on input line 108.
 pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.119 \end{document}
-                     <./Diagram.png>] (./Final Project.aux)
+l.118 \newpage
+               <./Diagram.png>] (c:/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2024/05/25 1.10b listings language file
+) (c:/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2024/05/25 1.10b listings language file
+) (c:/texlive/2024/texmf-dist/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2024/05/25 1.10b (Carsten Heinz)
+)
+Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 119.
+
+
+[5] (./Final Project.aux)
  ***********
 LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2024-05-27>
@@ -627,18 +637,18 @@ Package rerunfilecheck Info: File `"Final Project".out' has not changed.
 (rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
  ) 
 Here is how much of TeX's memory you used:
- 22552 strings out of 473584
- 410458 string characters out of 5732364
- 1932908 words of memory out of 5000000
- 45089 multiletter control sequences out of 15000+600000
- 558677 words of font info for 38 fonts, out of 8000000 for 9000
+ 23084 strings out of 473584
+ 416127 string characters out of 5732364
+ 2223908 words of memory out of 5000000
+ 45568 multiletter control sequences out of 15000+600000
+ 559012 words of font info for 40 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 102i,6n,107p,467b,441s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb>
-Output written on "Final Project.pdf" (4 pages, 76474 bytes).
+ 102i,6n,107p,467b,1310s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb>
+Output written on "Final Project.pdf" (5 pages, 99678 bytes).
 PDF statistics:
- 50 PDF objects out of 1000 (max. 8388607)
- 37 compressed objects within 1 object stream
- 12 named destinations out of 1000 (max. 500000)
+ 112 PDF objects out of 1000 (max. 8388607)
+ 96 compressed objects within 1 object stream
+ 56 named destinations out of 1000 (max. 500000)
  18 words of extra memory for PDF output out of 10000 (max. 10000000)
 

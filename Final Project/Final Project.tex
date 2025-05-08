@@ -115,5 +115,54 @@ Filter removes packets to or from the other access points on the network and als
 flooding the storage with unnecessary packets. Depending on what mode the device is currently operating in, the device will either save the packet information to the known\_connections\_file 
 or compare the RSSI of the incoming packet to the RSSI of the other recently received packets to try and determine if it's coming from a spoofed MAC address.
 
+\newpage
+\begin{lstlisting}[language=C++, caption=Packet Sniffer and MAC Filter, label=lst:main_code]
+// Ignored MACs
+const DeviceInfo ignoredMACs[] = {
+    { { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }, 0, 0, 0 }  // Broadcast address
+};
+// Function to check if a MAC address should be ignored
+bool isIgnoredMAC(const uint8_t *mac) {
+    // Check against ignored MACs list
+    for (const auto &ignored : ignoredMACs) {
+    if (memcmp(mac, ignored.mac, 6) == 0) {
+        return true;
+    }
+    }
+
+    // Make sure not to ignore the Host AP's MAC address
+    if (mac[0] == 0x84 && mac[1] == 0x23 && mac[2] == 0x88 && mac[3] == 0x7B && mac[4] == 0x90 && mac[5] == 0xA0) { 
+    return false;
+    } 
+    //Ignore the MAC addresses of other APs on network
+    else if (mac[0] == 0x84 && mac[1] == 0x23 && mac[2] == 0x88) {
+    return true;
+    }
+    return false;
+}
+
+// Packet sniffer function
+void sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
+  wifi_promiscuous_pkt_t *packet = (wifi_promiscuous_pkt_t *)buf;
+  uint8_t *srcMAC = &packet->payload[10];
+  int rssi = packet->rx_ctrl.rssi;
+
+  // Skip ignored MACs
+  if (isIgnoredMAC(srcMAC)) return;
+  
+  updateObservedDevices(srcMAC, rssi);
+  if (learningMode) {
+    // Print during active window
+      const char *pktType = (type == WIFI_PKT_MGMT) ? "MGMT" : "DATA";
+      Serial.printf("%s - MAC: %s RSSI: %d dBm\n", pktType, macToString(srcMAC).c_str(), rssi);
+  } else {
+    checkForSpoofing(srcMAC, rssi);
+  }
+} 
+\end{lstlisting}
+The packet sniffer is one of the main functions, and is responsible for detecting the packets that are sent to the access point. After detecting a packet, the function checks if the MAC address
+is in the ignored MACs list by calling isIgnoredMAC. If it is, the function will ignore the packet and move on to the next one. If it isn't, the function will call the updateObservedDevices 
+function to update the list of recently observed devices. If the device is in learning mode, the function will also print the MAC address and RSSI of the packet to the serial monitor for the 
+user to see. If the device is in monitoring mode, the function will call checkForSpoofing to try and determine if the MAC address is being spoofed.
 
 \end{document}

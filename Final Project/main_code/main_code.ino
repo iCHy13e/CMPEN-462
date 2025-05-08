@@ -29,7 +29,7 @@ const unsigned long UPDATE_INTERVAL = 30000; // 30 seconds
 // AP MAC address
 const uint8_t AP_BSSID[6] = { 0x84, 0x23, 0x88, 0x7B, 0x90, 0xA0 };
 
-// Ignored MACs (AP itself and broadcast)
+// Ignored MACs
 const DeviceInfo ignoredMACs[] = {
   { { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }, 0, 0, 0 }  // Broadcast address
 };
