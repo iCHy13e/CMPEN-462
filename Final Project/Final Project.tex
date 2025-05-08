@@ -59,33 +59,43 @@ Name: Justin Ngo
 \\Professor: \professor
 \\Class: \class
 \\Date: \date
-\\Project : \homeworkNumber
+\\Project : Wireless MAC Address Spoofing Detection System Using ESP32
 
 %---------------------ABSTRACT---------------------
 \newpage
 \secHeader{Abstract}
 \vspace{5mm}
 
-This report presents the implementation and analysis of an Orthogonal Frequency Division Multiplexing (OFDM) system and 
-covers several key components:
+The purpose of this project is to use an ESP32 microcontroller to create a device that passively detects wireless connections to an access point and logs the MAC addresses and RSSI of the various
+connections that are made. The device operates in two modes: learning and monitoring. When the device detects that there are no known connections in the known\_connections\_file, it will enter
+learning mode and begin logging the MAC addresses and corresponding RSSI of the connections that are made for the next 2 minutes and 30 seconds. Assuming that these connections are "normal" connections,
+the device will save these MAC addresses and their corresponding RSSI values to the known\_connections\_file and use that as a sort of whitelist of valid MAC addresses. 
+After the learning period, the device will enter monitoring mode and try to determine if the MAC address of incoming traffic is a spoofed MAC address or not by comparing the RSSI of any new connections
+to the RSSI of other connections that were made recently. 
 
+
+%---------------------OUTLINE---------------------
+\newpage
+\secHeader{Outline}
+\vspace{5mm}
+
+The main idea behind this project was just to experiment with the ESP32 microcontroller and see if I could get it to detect wireless connections made to the access point in my apartment living room.
+
+
+\secHeader{Tools and Libraries}
+\vspace{5mm}
 \begin{enumerate}
-    \item \textbf{Modulation Schemes}: Different modulation schemes such as BPSK, $\pi$/2-BPSK, QPSK, and 64-QAM are implemented in the 
-    \texttt{Modulators.py} file. These schemes are used to convert the input bit stream based off the 8-bit ASCII conversion of the string "WirelessCommunicationSystemsandSecurityJustinNgo"
-    into suitable symbols ready for transmission.
-
-    \item \textbf{OFDM Processing}: The \texttt{OFDM.py} file houses all the relevant functions used to produce an OFDM output, and handles the bulk of the processing.
-    The OFDM function is responsible for running the serial-to-parallel conversion, Inverse Fast Fourier Transform (IFFT), cyclic prefix insertion, and also graphs the output.
-
-    \item \textbf{Main Execution}: The \texttt{main.py} file generates the bit stream used for processing from the aforementioned phrase and is where the OFDM function is called 
-    to run the system for each modulation scheme.
-
-    \item \textbf{Visualization}: A sample of 2 symbols generated from the OFDM system is plotted for visualization and highlights the cyclic prefix and symbol boundaries. 
+    \item Arduino Nano ESP32 Microcontroller: this was the main hardware part used in the project. I selected it primarily because it was easy to get and I have a little experience with using other 
+    Arduino microcontrollers.
+    \item Arduino IDE: all the code was done in the Arduino IDE. I selected this IDE because I have prior experience with it from another class and remember it being fairly intuitive to use
+    \item SPIFFS Library: the SPIFFS library is what allowed the ESP32 to create a JSON file on its onboard flash memory. I found out about it while looking for a way to save the packet information
+    to a file for the device to reference later.
+    \item Wifi Library: the Wifi library allowed the ESP32 to connect to the same wifi network as my computer. I'm not sure that it was entirely necessary to go through with adding the ESP32 to the 
+    network but did so anyway to ensure that it was properly scanning the network for connections.
+    \item ESP32 Wifi Library: I used this library to set the ESP32 in promiscuous mode. This library is core to the device's functionality as it's what allows the ESP32 to detect the 
+    MAC addresses and RSSI of the connections that are made to the access point.
+    \item ArduinoJson Library: I used this to maintain the JSON file which stored the known connections that the device learned during its learning phase.
 \end{enumerate}
-
-
-
-
 
 
 \end{document}

@@ -7,7 +7,7 @@
 
 // File paths
 #define KNOWN_DEVICES_FILE "/known_devices.json"
-#define LEARNING_DURATION 150000  // 5 minutes in ms
+#define LEARNING_DURATION 150000  // 2.5 minutes in ms
 
 // Struct to hold MAC addresses and tracking data
 struct DeviceInfo {
@@ -15,6 +15,7 @@ struct DeviceInfo {
   int avgRSSI;
   unsigned long lastSeen;
   int packetCount;
+  unsigned long lastAlertTime; // New field for cooldown
 };
 
 // Global variables
@@ -38,9 +39,9 @@ const char *ssid = "Parkway Plaza Dojo";
 const char *password = "44WVFXf5";  // i trust that this leak isn't a big deal
 
 // Spoofing detection thresholds
-const int MAC_CHANGE_THRESHOLD = 3;       // Number of MAC changes to trigger alert
-const unsigned long TIME_WINDOW = 60000;  // 60 seconds for change detection
-const int RSSI_VARIATION_THRESHOLD = 15;  // Max expected RSSI variation for same device
+const int MAC_CHANGE_THRESHOLD = 10;      // Number of MAC changes to trigger alert
+const unsigned long TIME_WINDOW = 30000;  // 30 seconds for change detection
+const int RSSI_VARIATION_THRESHOLD = 25;  // Max expected RSSI variation for same device
 
 
 // Function to check if a MAC address should be ignored
@@ -192,16 +193,21 @@ void checkForSpoofing(const uint8_t *mac, int rssi) {
     if (memcmp(mac, known.mac, 6) == 0) {
       if (abs(rssi - known.avgRSSI) > RSSI_VARIATION_THRESHOLD) {
         Serial.printf("\nALERT: Known device %s shows abnormal RSSI change! Current RSSI: %d dBm, Known Avg RSSI: %d dBm", macToString(mac).c_str(), rssi, known.avgRSSI);
+        break; // Stop after the first match
       }
       return;
     }
   }
 
   // Check for MAC randomization
-  for (const auto &observed : observedDevices) {
+  for (auto &observed : observedDevices) {
     if (abs(rssi - observed.avgRSSI) < RSSI_VARIATION_THRESHOLD && memcmp(mac, observed.mac, 6) != 0 && (currentTime - observed.lastSeen) < TIME_WINDOW) {
-      Serial.printf("\nALERT: Potential MAC randomization detected!");
-      Serial.printf("\nCurrent: %s, Previous: %s\n", macToString(mac).c_str(), macToString(observed.mac).c_str());
+      if (currentTime - observed.lastAlertTime > TIME_WINDOW) { // Cooldown check
+        Serial.printf("\nALERT: Potential MAC randomization detected!");
+        Serial.printf("\nCurrent: %s, Previous: %s\n", macToString(mac).c_str(), macToString(observed.mac).c_str());
+        observed.lastAlertTime = currentTime; // Update last alert time
+        break; // Stop after the first match
+      }
     }
   }
 }
@@ -268,12 +274,12 @@ void setup() {
   }
 
   // Uncomment lines below to delete known devices file and start in learning mode
-  // deleteKnownDevicesFile();
-  // if (SPIFFS.exists(KNOWN_DEVICES_FILE)) {
-  //   Serial.println("File still exists after calling delete function!");
-  // } else {
-  //   Serial.println("File successfully deleted.");
-  // }
+  deleteKnownDevicesFile();
+  if (SPIFFS.exists(KNOWN_DEVICES_FILE)) {
+    Serial.println("File still exists after calling delete function!");
+  } else {
+    Serial.println("File successfully deleted.");
+  }
   
   Serial.println("SPIFFS mounted successfully");
 
@@ -340,6 +346,13 @@ void loop() {
       }
       if (!found) {
         // Add new device to known devices
+        if (knownDevices.size() >= 200) {
+          // Remove the oldest device based on lastSeen
+          auto oldest = std::min_element(knownDevices.begin(), knownDevices.end(),[](const DeviceInfo &a, const DeviceInfo &b) { return a.lastSeen < b.lastSeen;});
+          if (oldest != knownDevices.end()) {
+            knownDevices.erase(oldest);
+          }
+        }
         knownDevices.push_back(observed);
       }
     }
