@@ -7,7 +7,7 @@
 
 // File paths
 #define KNOWN_DEVICES_FILE "/known_devices.json"
-#define LEARNING_DURATION 60000  // 1 minutes in ms
+#define LEARNING_DURATION 120000  // 2 minutes in ms
 
 // Struct to hold MAC addresses and tracking data
 struct DeviceInfo {
@@ -35,8 +35,7 @@ const DeviceInfo ignoredMACs[] = {
 // Spoofing detection thresholds
 const int MAC_CHANGE_THRESHOLD = 3;       // Number of MAC changes to trigger alert
 const unsigned long TIME_WINDOW = 60000;  // 60 seconds for change detection
-const int RSSI_VARIATION_THRESHOLD = 10;  // Max expected RSSI variation for same device
-
+const int RSSI_VARIATION_THRESHOLD = 15;  // Max expected RSSI variation for same device
 // Timing variables
 unsigned long lastPrintTime = 0;
 const unsigned long printDuration = 3000;   // 3 seconds
@@ -46,6 +45,15 @@ bool isPrinting = false;
 // WiFi credentials not sure if it's actually necessary for the esp32 to connect to the network but it does just in case
 const char *ssid = "Parkway Plaza Dojo";
 const char *password = "44WVFXf5";  // i trust that this leak isn't a big deal
+
+
+// Function to delete known devices file 
+void deleteKnownDevicesFile() {
+  if (SPIFFS.exists(KNOWN_DEVICES_FILE)) {
+    SPIFFS.remove(KNOWN_DEVICES_FILE);
+    SPIFFS.remove("/known_devices.json");
+  }
+}
 
 // Function to convert MAC to String
 String macToString(const uint8_t *mac) {
@@ -79,28 +87,33 @@ void saveKnownDevices() {
 }
 
 void readKnownDevicesFile() {
+  // Check if the file exists
+  if (!SPIFFS.exists("/known_devices.json")) {
+    Serial.println("known_devices.json does not exist");
+    return;
+  }
+
   // Open the file for reading
   File file = SPIFFS.open("/known_devices.json", "r");
-  
   if (!file) {
     Serial.println("Failed to open known_devices.json");
     return;
   }
-  
+
   Serial.println("Contents of known_devices.json:");
   
   // Read the entire file content
   String fileContent = file.readString();
   file.close();
-  
-  // Parse and reserialize the JSON for pretty printing
-  StaticJsonDocument<1024> doc;
+    
+  // Parse and re-serialize the JSON for pretty printing
+  JsonDocument doc;
   DeserializationError error = deserializeJson(doc, fileContent);
   if (error) {
     Serial.println("Failed to parse JSON content");
     return;
   }
-  
+    
   String formattedJson;
   serializeJsonPretty(doc, formattedJson);
   Serial.println(formattedJson);
@@ -190,7 +203,7 @@ void checkForSpoofing(const uint8_t *mac, int rssi) {
   for (const auto &known : knownDevices) {
     if (memcmp(mac, known.mac, 6) == 0) {
       if (abs(rssi - known.avgRSSI) > RSSI_VARIATION_THRESHOLD) {
-        Serial.printf("\nALERT: Known device %s shows abnormal RSSI change! Current RSSI: %d dBm, Known Avg RSSI: %d dBm\n", macToString(mac).c_str(), rssi, known.avgRSSI);
+        Serial.printf("\nALERT: Known device %s shows abnormal RSSI change! Current RSSI: %d dBm, Known Avg RSSI: %d dBm", macToString(mac).c_str(), rssi, known.avgRSSI);
       }
       return;
     }
@@ -199,8 +212,8 @@ void checkForSpoofing(const uint8_t *mac, int rssi) {
   // Check for MAC randomization
   for (const auto &observed : observedDevices) {
     if (abs(rssi - observed.avgRSSI) < RSSI_VARIATION_THRESHOLD && memcmp(mac, observed.mac, 6) != 0 && (currentTime - observed.lastSeen) < TIME_WINDOW) {
-      Serial.printf("\nALERT: Potential MAC randomization detected!\n");
-      Serial.printf("Current: %s, Previous: %s\n", macToString(mac).c_str(), macToString(observed.mac).c_str());
+      Serial.printf("\nALERT: Potential MAC randomization detected!");
+      Serial.printf("\nCurrent: %s, Previous: %s", macToString(mac).c_str(), macToString(observed.mac).c_str());
     }
   }
 }
@@ -227,25 +240,9 @@ void sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
 
 void setup() {
   Serial.begin(115200);
-  delay(2000);
+  delay(5000); // Wait for 5 Seconds for Serial Monitor to open
 
-  // Initialize filesystem format if mount fails
-  if (!SPIFFS.begin(true)) {
-    Serial.println("SPIFFS Mount Failed, attempting to format...");
-    if (SPIFFS.format()) {
-      Serial.println("SPIFFS formatted successfully");
-      if (!SPIFFS.begin(true)) {
-        Serial.println("SPIFFS mount failed even after formatting!");
-        while (1) delay(1000);
-      }
-    } else {
-      Serial.println("SPIFFS formatting failed!");
-      while (1) delay(1000);
-    }
-  }
-  
-  Serial.println("SPIFFS mounted successfully");
-  readKnownDevicesFile();  // Print contents to serial for user to check
+  Serial.println("Starting up...");
 
   // Connect to WiFi
   Serial.println("Connecting to WiFi...");
@@ -266,12 +263,40 @@ void setup() {
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
 
+
+  // Initialize filesystem format if mount fails
+  if (!SPIFFS.begin(true)) {
+    Serial.println("SPIFFS Mount Failed, attempting to format...");
+    if (SPIFFS.format()) {
+      Serial.println("SPIFFS formatted successfully");
+      if (!SPIFFS.begin(true)) {
+        Serial.println("SPIFFS mount failed even after formatting!");
+        while (1) delay(1000);
+      }
+    } else {
+      Serial.println("SPIFFS formatting failed!");
+      while (1) delay(1000);
+    }
+  }
+
+  // Uncomment lines below to delete known devices file and start from scratch
+  deleteKnownDevicesFile();
+  if (SPIFFS.exists(KNOWN_DEVICES_FILE)) {
+    Serial.println("File still exists after calling delete function!");
+  } else {
+    Serial.println("File successfully deleted.");
+  }
+  
+  Serial.println("SPIFFS mounted successfully");
+  readKnownDevicesFile();  // Print contents to serial for user to check
+
+
   // Load known devices or start learning
   loadKnownDevices();
   if (knownDevices.empty()) {
     learningMode = true;
     learningStartTime = millis();
-    Serial.println("Starting 1-minute learning mode...");
+    Serial.println("Starting 2-minute learning mode...");
   } else {
     learningMode = false;
     Serial.println("Known devices loaded. Starting monitoring mode.");
