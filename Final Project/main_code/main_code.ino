@@ -40,7 +40,7 @@ const char *password = "44WVFXf5";  // i trust that this leak isn't a big deal
 
 // Spoofing detection thresholds
 const unsigned long TIME_WINDOW = 30000;  // 30 seconds for change detection
-const int RSSI_VARIATION_THRESHOLD = 25;  // Max expected RSSI variation for same device
+const int RSSI_VARIATION_THRESHOLD = 20;  // Max expected RSSI variation for same device
 const int RANDOM_MAC_RSSI = 10;           // threshold for random MAC detection calculation
 
 
@@ -326,7 +326,7 @@ void loop() {
     Serial.println("Switching to monitoring mode...");
   }
 
-  // Update known devices every 60 seconds
+  // Update known devices every 30 seconds
   if (currentTime - lastUpdateTime >= UPDATE_INTERVAL) {
     lastUpdateTime = currentTime;
 

@@ -165,4 +165,50 @@ is in the ignored MACs list by calling isIgnoredMAC. If it is, the function will
 function to update the list of recently observed devices. If the device is in learning mode, the function will also print the MAC address and RSSI of the packet to the serial monitor for the 
 user to see. If the device is in monitoring mode, the function will call checkForSpoofing to try and determine if the MAC address is being spoofed.
 
+\newpage
+\begin{lstlisting}[language=C++, caption=Spoof Detection, label=lst:spoof detector]
+// Check for MAC spoofing
+void checkForSpoofing(const uint8_t *mac, int rssi) {
+  unsigned long currentTime = millis();
+
+  // Check if MAC matches AP's MAC
+  if (memcmp(mac, AP_BSSID, 6) == 0) {
+    Serial.println("\nALERT: Device using AP's MAC address detected!");
+    return;
+  }
+
+  // Check against known devices
+  for (const auto &known : knownDevices) {
+    if (memcmp(mac, known.mac, 6) == 0) {
+      if (abs(rssi - known.avgRSSI) > RSSI_VARIATION_THRESHOLD) {
+        Serial.printf("\nALERT: Known device %s shows abnormal RSSI change! Current RSSI: %d dBm, Known Avg RSSI: %d dBm", macToString(mac).c_str(), rssi, known.avgRSSI);
+        break; // Stop after the first match
+      }
+      return;
+    }
+  }
+
+  // Check for MAC randomization
+  for (auto &observed : observedDevices) {
+    if (abs(rssi - observed.avgRSSI) < RANDOM_MAC_RSSI && memcmp(mac, observed.mac, 6) != 0 && (currentTime - observed.lastSeen) < TIME_WINDOW) {
+      if (currentTime - observed.lastAlertTime > TIME_WINDOW) { // Cooldown check
+        Serial.printf("\nALERT: Potential MAC randomization detected!");
+        Serial.printf("\nCurrent: %s, Previous: %s\n", macToString(mac).c_str(), macToString(observed.mac).c_str());
+        observed.lastAlertTime = currentTime; // Update last alert time
+        break; // Stop after the first match
+      }
+    }
+  }
+}
+\end{lstlisting}
+The checkForSpoofing function is the other primary function and is what runs the main logic to determine if the MAC address is being spoofed or not. It checks for 3 main criteria:
+\begin{enumerate}
+    \item If the MAC address matches the MAC address of the access point
+    \item If the RSSI from a known device falls outside of the variation threshold (set to 20 dBm)
+    \item If the RSSI from an unknown device compared to another recently observed device is within the random MAC RSSI threshold (set to 10 dBm) 
+\end{enumerate}
+If any of these criteria are met, the function will print an alert to the serial monitor. The logic behind the third criteria is that if the RSSI of an unknown device is within a 10 dBm range
+of another recently observed device, it could be a sign that the device is using a randomized MAC address.
+
+
 \end{document}
