@@ -7,7 +7,7 @@
 
 // File paths
 #define KNOWN_DEVICES_FILE "/known_devices.json"
-#define LEARNING_DURATION 120000  // 2 minutes in ms
+#define LEARNING_DURATION 150000  // 5 minutes in ms
 
 // Struct to hold MAC addresses and tracking data
 struct DeviceInfo {
@@ -22,29 +22,53 @@ std::vector<DeviceInfo> knownDevices;
 std::vector<DeviceInfo> observedDevices;
 bool learningMode = true;
 unsigned long learningStartTime = 0;
+unsigned long lastUpdateTime = 0;
+const unsigned long UPDATE_INTERVAL = 60000; // 60 seconds
 
 // AP MAC address
 const uint8_t AP_BSSID[6] = { 0x84, 0x23, 0x88, 0x7B, 0x90, 0xA0 };
 
 // Ignored MACs (AP itself and broadcast)
 const DeviceInfo ignoredMACs[] = {
-  { { 0x84, 0x23, 0x88, 0x7B, 0x7E, 0x11 }, 0, 0, 0 },  // Ruckus Wireless AP
-  { { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }, 0, 0, 0 }   // Broadcast address
+  { { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }, 0, 0, 0 }  // Broadcast address
 };
+
+// WiFi credentials not sure if it's actually necessary for the esp32 to connect to the network but it does just in case
+const char *ssid = "Parkway Plaza Dojo";
+const char *password = "44WVFXf5";  // i trust that this leak isn't a big deal
 
 // Spoofing detection thresholds
 const int MAC_CHANGE_THRESHOLD = 3;       // Number of MAC changes to trigger alert
 const unsigned long TIME_WINDOW = 60000;  // 60 seconds for change detection
 const int RSSI_VARIATION_THRESHOLD = 15;  // Max expected RSSI variation for same device
-// Timing variables
-unsigned long lastPrintTime = 0;
-const unsigned long printDuration = 3000;   // 3 seconds
-const unsigned long cycleDuration = 10000;  // 10 seconds
-bool isPrinting = false;
 
-// WiFi credentials not sure if it's actually necessary for the esp32 to connect to the network but it does just in case
-const char *ssid = "Parkway Plaza Dojo";
-const char *password = "44WVFXf5";  // i trust that this leak isn't a big deal
+
+// Function to check if a MAC address should be ignored
+bool isIgnoredMAC(const uint8_t *mac) {
+  // Check against ignored MACs list
+  for (const auto &ignored : ignoredMACs) {
+    if (memcmp(mac, ignored.mac, 6) == 0) {
+      return true;
+    }
+  }
+
+  // Make sure not to ignore the Host AP's MAC address
+  if (mac[0] == 0x84 && mac[1] == 0x23 && mac[2] == 0x88 && mac[3] == 0x7B && mac[4] == 0x90 && mac[5] == 0xA0) { 
+    return false;
+  } 
+  //Ignore the MAC addresses of other Ruckus Wireless APs
+  else if (mac[0] == 0x84 && mac[1] == 0x23 && mac[2] == 0x88) {
+    return true;
+  }
+  return false;
+}
+
+// Function to convert MAC to String
+String macToString(const uint8_t *mac) {
+  char buf[20];
+  snprintf(buf, sizeof(buf), "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  return String(buf);
+}
 
 
 // Function to delete known devices file 
@@ -53,13 +77,6 @@ void deleteKnownDevicesFile() {
     SPIFFS.remove(KNOWN_DEVICES_FILE);
     SPIFFS.remove("/known_devices.json");
   }
-}
-
-// Function to convert MAC to String
-String macToString(const uint8_t *mac) {
-  char buf[20];
-  snprintf(buf, sizeof(buf), "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-  return String(buf);
 }
 
 // Save known devices to SPIFFS
@@ -86,60 +103,40 @@ void saveKnownDevices() {
   file.close();
 }
 
-void readKnownDevicesFile() {
+// Load known devices from SPIFFS
+void loadKnownDevices() {
   // Check if the file exists
-  if (!SPIFFS.exists("/known_devices.json")) {
-    Serial.println("known_devices.json does not exist");
+  if (!SPIFFS.exists(KNOWN_DEVICES_FILE)) {
+    Serial.println("No known devices file found - starting in learning mode");
     return;
   }
 
   // Open the file for reading
-  File file = SPIFFS.open("/known_devices.json", "r");
+  File file = SPIFFS.open(KNOWN_DEVICES_FILE, FILE_READ);
   if (!file) {
     Serial.println("Failed to open known_devices.json");
     return;
   }
 
   Serial.println("Contents of known_devices.json:");
-  
+
   // Read the entire file content
   String fileContent = file.readString();
   file.close();
-    
+
   // Parse and re-serialize the JSON for pretty printing
-  JsonDocument doc;
+  JsonDocument doc; 
   DeserializationError error = deserializeJson(doc, fileContent);
   if (error) {
     Serial.println("Failed to parse JSON content");
     return;
   }
-    
+
   String formattedJson;
   serializeJsonPretty(doc, formattedJson);
   Serial.println(formattedJson);
-}
 
-// Load known devices from SPIFFS
-void loadKnownDevices() {
-  if (!SPIFFS.exists(KNOWN_DEVICES_FILE)) {
-    Serial.println("No known devices file found - starting in learning mode");
-    return;
-  }
-
-  File file = SPIFFS.open(KNOWN_DEVICES_FILE, FILE_READ);
-  if (!file) {
-    Serial.println("Failed to open file");
-    return;
-  }
-
-  JsonDocument doc;
-  DeserializationError error = deserializeJson(doc, file);
-  if (error) {
-    Serial.println("Failed to parse file");
-    file.close();
-    return;
-  }
-
+  // Load known devices from the parsed JSON
   knownDevices.clear();
   for (JsonObject dev : doc["devices"].as<JsonArray>()) {
     const char *macStr = dev["mac"];
@@ -154,19 +151,10 @@ void loadKnownDevices() {
     device.lastSeen = 0;
     knownDevices.push_back(device);
   }
-  file.close();
+
   Serial.printf("Loaded %d known devices\n", knownDevices.size());
 }
 
-// Check if MAC should be ignored
-bool isIgnoredMAC(const uint8_t *mac) {
-  for (const auto &ignored : ignoredMACs) {
-    if (memcmp(mac, ignored.mac, 6) == 0) {
-      return true;
-    }
-  }
-  return false;
-}
 
 // Update or add device to observed list
 void updateObservedDevices(const uint8_t *mac, int rssi) {
@@ -213,12 +201,12 @@ void checkForSpoofing(const uint8_t *mac, int rssi) {
   for (const auto &observed : observedDevices) {
     if (abs(rssi - observed.avgRSSI) < RSSI_VARIATION_THRESHOLD && memcmp(mac, observed.mac, 6) != 0 && (currentTime - observed.lastSeen) < TIME_WINDOW) {
       Serial.printf("\nALERT: Potential MAC randomization detected!");
-      Serial.printf("\nCurrent: %s, Previous: %s", macToString(mac).c_str(), macToString(observed.mac).c_str());
+      Serial.printf("\nCurrent: %s, Previous: %s\n", macToString(mac).c_str(), macToString(observed.mac).c_str());
     }
   }
 }
 
-// Packet sniffer callback
+// Packet sniffer function
 void sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
   wifi_promiscuous_pkt_t *packet = (wifi_promiscuous_pkt_t *)buf;
   uint8_t *srcMAC = &packet->payload[10];
@@ -226,9 +214,9 @@ void sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
 
   // Skip ignored MACs
   if (isIgnoredMAC(srcMAC)) return;
-
+  
+  updateObservedDevices(srcMAC, rssi);
   if (learningMode) {
-    updateObservedDevices(srcMAC, rssi);
     // Print during active window
       const char *pktType = (type == WIFI_PKT_MGMT) ? "MGMT" : "DATA";
       Serial.printf("%s - MAC: %s RSSI: %d dBm\n", pktType, macToString(srcMAC).c_str(), rssi);
@@ -279,24 +267,22 @@ void setup() {
     }
   }
 
-  // Uncomment lines below to delete known devices file and start from scratch
-  deleteKnownDevicesFile();
-  if (SPIFFS.exists(KNOWN_DEVICES_FILE)) {
-    Serial.println("File still exists after calling delete function!");
-  } else {
-    Serial.println("File successfully deleted.");
-  }
+  // Uncomment lines below to delete known devices file and start in learning mode
+  // deleteKnownDevicesFile();
+  // if (SPIFFS.exists(KNOWN_DEVICES_FILE)) {
+  //   Serial.println("File still exists after calling delete function!");
+  // } else {
+  //   Serial.println("File successfully deleted.");
+  // }
   
   Serial.println("SPIFFS mounted successfully");
-  readKnownDevicesFile();  // Print contents to serial for user to check
-
 
   // Load known devices or start learning
   loadKnownDevices();
   if (knownDevices.empty()) {
     learningMode = true;
     learningStartTime = millis();
-    Serial.println("Starting 2-minute learning mode...");
+    Serial.println("Starting 5-minute learning mode...");
   } else {
     learningMode = false;
     Serial.println("Known devices loaded. Starting monitoring mode.");
@@ -331,14 +317,35 @@ void loop() {
     knownDevices = observedDevices;
     saveKnownDevices();
     Serial.printf("\nLearning complete. Saved %d known devices.\n", knownDevices.size());
+    Serial.println("Switching to monitoring mode...");
   }
 
-  // Manage print timing
-  if (currentTime - lastPrintTime >= cycleDuration) {
-    lastPrintTime = currentTime;
-    isPrinting = true;
-    if (learningMode) {
-      Serial.printf("\nLearning mode - %d devices observed\n", observedDevices.size());
+  // Update known devices every 60 seconds
+  if (currentTime - lastUpdateTime >= UPDATE_INTERVAL) {
+    lastUpdateTime = currentTime;
+
+    // Update known devices with observed devices
+    for (const auto &observed : observedDevices) {
+      bool found = false;
+      for (auto &known : knownDevices) {
+        if (memcmp(observed.mac, known.mac, 6) == 0) {
+          // Update existing known device
+          known.avgRSSI = (known.avgRSSI * known.packetCount + observed.avgRSSI * observed.packetCount) /
+                          (known.packetCount + observed.packetCount);
+          known.packetCount += observed.packetCount;
+          known.lastSeen = observed.lastSeen;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        // Add new device to known devices
+        knownDevices.push_back(observed);
+      }
     }
+
+    // Save updated known devices to SPIFFS
+    saveKnownDevices();
+    Serial.printf("\nUpdated known devices. Total: %d devices.", knownDevices.size());
   }
 }
