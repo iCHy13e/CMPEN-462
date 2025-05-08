@@ -18,7 +18,7 @@
 %Basic Variables (Modify as required per homework)
 \def\class{CompEn 462}
 \def\homeworkNumber{Final Project}
-\def\date{05.07.2025}
+\def\date{05.08.2025}
 \def\professor{Mark Mahon}
 
 % Define a custom style for listings
@@ -72,7 +72,7 @@ connections that are made. The device operates in two modes: learning and monito
 learning mode and begin logging the MAC addresses and corresponding RSSI of the connections that are made for the next 2 minutes and 30 seconds. Assuming that these connections are "normal" connections,
 the device will save these MAC addresses and their corresponding RSSI values to the known\_connections\_file and use that as a sort of whitelist of valid MAC addresses. 
 After the learning period, the device will enter monitoring mode and try to determine if the MAC address of incoming traffic is a spoofed MAC address or not by comparing the RSSI of any new connections
-to the RSSI of other connections that were made recently. 
+to the RSSI of other connections that were made recently. \\ 
 
 
 %---------------------OUTLINE---------------------
@@ -86,6 +86,8 @@ The main idea behind this project was just to experiment with the ESP32 microcon
 \secHeader{Tools and Libraries}
 \vspace{5mm}
 \begin{enumerate}
+    \item Windows Command Prompt: command prompt was used during development to pull the MAC address and IP of the access point that I was trying to target, and during testing to 
+    ping the access point to generate traffic for the device to detect.
     \item Arduino Nano ESP32 Microcontroller: this was the main hardware part used in the project. I selected it primarily because it was easy to get and I have a little experience with using other 
     Arduino microcontrollers.
     \item Arduino IDE: all the code was done in the Arduino IDE. I selected this IDE because I have prior experience with it from another class and remember it being fairly intuitive to use
@@ -100,7 +102,7 @@ The main idea behind this project was just to experiment with the ESP32 microcon
 
 
 \newpage
-\secHeader{Code Walkthrough}
+\secHeader{Major Code Components}
 \vspace{5mm}
 
 \begin{figure}[H] % Use [H] to force the figure to stay here
@@ -208,7 +210,80 @@ The checkForSpoofing function is the other primary function and is what runs the
     \item If the RSSI from an unknown device compared to another recently observed device is within the random MAC RSSI threshold (set to 10 dBm) 
 \end{enumerate}
 If any of these criteria are met, the function will print an alert to the serial monitor. The logic behind the third criteria is that if the RSSI of an unknown device is within a 10 dBm range
-of another recently observed device, it could be a sign that the device is using a randomized MAC address.
+of another recently observed device, it could be a sign that the device is using a randomized MAC address. The TIME\_WINDOW variable determines how long the observed devices are "kept in memory" 
+and is supposed to resets the cooldown period for the alert. However, in testing, it seems that certain devices still manage to trigger the alert more than once within that time period, as shown below 
+
+\begin{lstlisting}[language=C++, caption=Serial Output for Spoof Detection, label=lst:spoof detector serial output]
+  23:43:38.834 -> ALERT: Potential MAC randomization detected!
+  23:43:38.872 -> Current: F6:04:3A:AB:86:9A, Previous: C0:E7:BF:5E:40:C6
+  23:43:38.872 -> 
+  23:43:38.872 -> ALERT: Potential MAC randomization detected!
+  23:43:38.872 -> Current: F6:89:C7:EE:36:30, Previous: 42:86:27:F0:01:AE
+\end{lstlisting}
+
+\vspace{5mm}
+\noindent\textbf{Assumptions}
+
+One of the core assumptions that I made on this project was that I could isolate the traffic being sent to the access point that I wanted to target. I assumed that by filtering out the MAC addresses
+of the other access points on the network (since it's a shared network for the entire apartment complex), I would be able to get a good idea of the traffic that was being sent to my access point.
+I unfortunately don't know if this assumption was correct and am unsure of whether I successfully isolate the traffic that was being picked up by the ESP32. This assumption is also why I can't come to
+any definitive conclusions about how effective the device is at detecting spoofed MAC addresses. 
 
 
+%---------------------RESULTS---------------------
+\newpage
+\secHeader{Testing}
+\vspace{5mm}
+The easiest functionality to test was checking known devices for abnormal RSSI fluctuations. In order to test the device, I ran the program on the ESP32 and let it sit by my computer for the duration 
+while pinging the access point using Windows Command Prompt to make sure that my PC was generating enough traffic to get a good baseline of the RSSI. I also had spotify running in the background to 
+generate some additional traffic just to ensure that I was getting accurate data. Once the learning period was over, I moved my laptop between the ESP32 and my computer, 
+and then shrouded the ESP32 with paper and aluminum foil to introduce some interference and see if the device would correctly detect the RSSI change.
+
+
+
+
+
+\begin{lstlisting}[language=bash, caption=Testing Known Devices for Abnormal RSSI Values, label=lst:testing]
+WINDOWS COMMAND PROMPT:
+  Connection-specific DNS Suffix  . :
+  Description . . . . . . . . : Realtek 8723DE Wireless LAN 802.11n PCI-E NIC
+  Physical Address. . . . . . : 1C-BF-C0-A1-DB-15
+  DHCP Enabled. . . . . . . . : Yes
+  Autoconfiguration Enabled . : Yes
+  IPv4 Address. . . . . . . . : 172.16.201.160(Preferred)
+  Subnet Mask . . . . . . . . : 255.255.255.0
+  Default Gateway . . . . . . : fe80::a55:31ff:feeb:57e5%13
+                                172.16.201.1
+  DHCP Server . . . . . . . . : 172.16.201.1
+  DHCPv6 IAID . . . . . . . . : 203210688
+  DHCPv6 Client DUID. . . . . : 00-01-00-01-2D-C7-85-A3-A4-BB-6D-B0-6C-C8
+  DNS Servers . . . . . . . . : 8.8.8.8
+  NetBIOS over Tcpip. . . . . : Enabled
+
+ping 172.16.201.1
+
+Pinging 172.16.201.1 with 32 bytes of data:
+Reply from 172.16.201.1: bytes=32 time=5ms TTL=64
+Reply from 172.16.201.1: bytes=32 time=6ms TTL=64
+Reply from 172.16.201.1: bytes=32 time=8ms TTL=64
+Reply from 172.16.201.1: bytes=32 time=5ms TTL=64
+
+Ping statistics for 172.16.201.1:
+  Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),
+Approximate round trip times in milli-seconds:
+  Minimum = 5ms, Maximum = 8ms, Average = 6ms
+
+ARDUINO SERIAL MONITOR:
+15:18:16.316 -> Learning complete. Saved 149 known devices.
+15:18:16.316 -> Switching to monitoring mode...
+15:18:16.316 -> Your MAC address: 1C:BF:C0:A1:DB:15 was detected during learning mode. RSSI: -29 dBm
+15:20:23.365 -> ALERT: Known device 1C:BF:C0:A1:DB:15 shows abnormal RSSI change! Current RSSI: -55 dBm, Known Avg RSSI: -29 dBm
+\end{lstlisting}
+
+\secHeader{Results}
+\vspace{5mm}
+
+The device does work and is capable of sniffing packets and logging the corresponding MAC addresses and RSSI values. The device is also capable of saving the known connections to a JSON file
+and loading them back into memory when the device is restarted, either by pushing the button or uploading new code with the IDE. However, I'm not sure how effective the device is at detecting when a 
+MAC address is being spoofed. 
 \end{document}

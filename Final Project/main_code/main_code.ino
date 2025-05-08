@@ -16,6 +16,7 @@ struct DeviceInfo {
   unsigned long lastSeen;
   int packetCount;
   unsigned long lastAlertTime; 
+  float confidenceScore; // Track how likely a device is to be a spoofed MAC
 };
 
 // Global variables
@@ -27,6 +28,7 @@ unsigned long lastUpdateTime = 0;
 const unsigned long UPDATE_INTERVAL = 30000; // 30 seconds
 
 // AP MAC address
+const uint8_t AP_IP[4] = { 172, 16, 201, 1 };
 const uint8_t AP_BSSID[6] = { 0x84, 0x23, 0x88, 0x7B, 0x90, 0xA0 };
 
 // Ignored MACs
@@ -39,9 +41,12 @@ const char *ssid = "Parkway Plaza Dojo";
 const char *password = "44WVFXf5";  // i trust that this leak isn't a big deal
 
 // Spoofing detection thresholds
-const unsigned long TIME_WINDOW = 30000;  // 30 seconds for change detection
+const unsigned long TIME_WINDOW = 20000;  // 30 seconds for change detection
 const int RSSI_VARIATION_THRESHOLD = 20;  // Max expected RSSI variation for same device
-const int RANDOM_MAC_RSSI = 10;           // threshold for random MAC detection calculation
+const int RANDOM_MAC_RSSI = 15;           // threshold for random MAC detection calculation
+const int MIN_PACKET_COUNT = 5;           // Minimum packets required for randomization check
+const float CONFIDENCE_THRESHOLD = 0.5;   // Minimum confidence required
+
 
 
 // Function to check if a MAC address should be ignored
@@ -59,7 +64,7 @@ bool isIgnoredMAC(const uint8_t *mac) {
   } 
   //Ignore the MAC addresses of other APs on network
   else if (mac[0] == 0x84 && mac[1] == 0x23 && mac[2] == 0x88) {
-    return true;
+      return true;
   }
   return false;
 }
@@ -165,6 +170,7 @@ void updateObservedDevices(const uint8_t *mac, int rssi) {
       device.avgRSSI = (device.avgRSSI * device.packetCount + rssi) / (device.packetCount + 1);
       device.packetCount++;
       device.lastSeen = millis();
+      device.confidenceScore = (device.packetCount > MIN_PACKET_COUNT) ? (1.0 - (abs(rssi - device.avgRSSI) / RANDOM_MAC_RSSI)) : 0.0;
       return;
     }
   }
@@ -175,6 +181,7 @@ void updateObservedDevices(const uint8_t *mac, int rssi) {
   newDevice.avgRSSI = rssi;
   newDevice.packetCount = 1;
   newDevice.lastSeen = millis();
+  newDevice.confidenceScore = 0.0; // Initialize confidence score for new device
   observedDevices.push_back(newDevice);
 }
 
@@ -188,12 +195,15 @@ void checkForSpoofing(const uint8_t *mac, int rssi) {
     return;
   }
 
-  // Check against known devices
-  for (const auto &known : knownDevices) {
+  // Check known devices for abnormal RSSI change
+  for (auto &known : knownDevices) {
     if (memcmp(mac, known.mac, 6) == 0) {
       if (abs(rssi - known.avgRSSI) > RSSI_VARIATION_THRESHOLD) {
-        Serial.printf("\nALERT: Known device %s shows abnormal RSSI change! Current RSSI: %d dBm, Known Avg RSSI: %d dBm", macToString(mac).c_str(), rssi, known.avgRSSI);
-        break; // Stop after the first match
+        if (currentTime - known.lastAlertTime > TIME_WINDOW) { // Cooldown check
+          Serial.printf("\nALERT: Known device %s shows abnormal RSSI change! Current RSSI: %d dBm, Known Avg RSSI: %d dBm\n",
+                        macToString(mac).c_str(), rssi, known.avgRSSI);
+          known.lastAlertTime = currentTime; // Update last alert time
+        }
       }
       return;
     }
@@ -201,13 +211,22 @@ void checkForSpoofing(const uint8_t *mac, int rssi) {
 
   // Check for MAC randomization
   for (auto &observed : observedDevices) {
-    if (abs(rssi - observed.avgRSSI) < RANDOM_MAC_RSSI && memcmp(mac, observed.mac, 6) != 0 && (currentTime - observed.lastSeen) < TIME_WINDOW) {
-      if (currentTime - observed.lastAlertTime > TIME_WINDOW) { // Cooldown check
-        Serial.printf("\nALERT: Potential MAC randomization detected!");
-        Serial.printf("\nCurrent: %s, Previous: %s\n", macToString(mac).c_str(), macToString(observed.mac).c_str());
-        observed.lastAlertTime = currentTime; // Update last alert time
-        break; // Stop after the first match
+    if (memcmp(mac, observed.mac, 6) != 0 &&
+        observed.packetCount >= MIN_PACKET_COUNT &&
+        abs(rssi - observed.avgRSSI) < RANDOM_MAC_RSSI &&
+        (currentTime - observed.lastSeen) < TIME_WINDOW) {
+      
+      // Calculate confidence score
+      float confidenceScore = 1.0 - (abs(rssi - observed.avgRSSI) / RANDOM_MAC_RSSI);
+      if (confidenceScore < CONFIDENCE_THRESHOLD) {
+        if (currentTime - observed.lastAlertTime > TIME_WINDOW) { // Cooldown check
+          Serial.printf("\nALERT: Potential MAC randomization detected!");
+          Serial.printf("\nCurrent: %s, Previous: %s, Confidence: %.2f\n",
+                        macToString(mac).c_str(), macToString(observed.mac).c_str(), confidenceScore);
+          observed.lastAlertTime = currentTime; // Update last alert time
+        }
       }
+      break; // Stop after the first match
     }
   }
 }
@@ -220,16 +239,16 @@ void sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
 
   // Skip ignored MACs
   if (isIgnoredMAC(srcMAC)) return;
-  
+
   updateObservedDevices(srcMAC, rssi);
   if (learningMode) {
     // Print during active window
-      const char *pktType = (type == WIFI_PKT_MGMT) ? "MGMT" : "DATA";
-      Serial.printf("%s - MAC: %s RSSI: %d dBm\n", pktType, macToString(srcMAC).c_str(), rssi);
+    const char *pktType = (type == WIFI_PKT_MGMT) ? "MGMT" : "DATA";
+    Serial.printf("%s - MAC: %s RSSI: %d dBm\n", pktType, macToString(srcMAC).c_str(), rssi);
   } else {
     checkForSpoofing(srcMAC, rssi);
   }
-} 
+}
 
 
 void setup() {
@@ -298,11 +317,11 @@ void setup() {
   WiFi.mode(WIFI_MODE_STA);
   esp_wifi_set_promiscuous(true);
 
-  wifi_promiscuous_filter_t filter = {
-    .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA
-  };
+  // wifi_promiscuous_filter_t filter = {
+  //   .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA
+  // };
 
-  esp_wifi_set_promiscuous_filter(&filter);
+  // esp_wifi_set_promiscuous_filter(&filter);
   esp_wifi_set_promiscuous_rx_cb(sniffer);
 }
 
@@ -324,7 +343,28 @@ void loop() {
     saveKnownDevices();
     Serial.printf("\nLearning complete. Saved %d known devices.\n", knownDevices.size());
     Serial.println("Switching to monitoring mode...");
-  }
+    
+    // Check if my MAC was detected during learning mode
+    const uint8_t myMAC[6] = { 0x1C, 0xBF, 0xC0, 0xA1, 0xDB, 0x15 }; // doubt you can do much or want to do much with my MAC address
+    bool foundMyMAC = false;
+    for (const auto &device : knownDevices) {
+      if (memcmp(device.mac, myMAC, 6) == 0) {
+        foundMyMAC = true;
+        break;
+      }
+    }
+    if (foundMyMAC) {
+      for (const auto &device : knownDevices) {
+        if (memcmp(device.mac, myMAC, 6) == 0) {
+          Serial.printf("Your MAC address: %s was detected during learning mode. RSSI: %d dBm\n", macToString(device.mac).c_str(), device.avgRSSI);
+          break;
+        } 
+      }
+    } else {
+      Serial.println("Your MAC address was NOT detected during learning mode.");
+    } 
+  } 
+   
 
   // Update known devices every 30 seconds
   if (currentTime - lastUpdateTime >= UPDATE_INTERVAL) {
@@ -336,8 +376,7 @@ void loop() {
       for (auto &known : knownDevices) {
         if (memcmp(observed.mac, known.mac, 6) == 0) {
           // Update existing known device
-          known.avgRSSI = (known.avgRSSI * known.packetCount + observed.avgRSSI * observed.packetCount) /
-                          (known.packetCount + observed.packetCount);
+          known.avgRSSI = (known.avgRSSI * known.packetCount + observed.avgRSSI * observed.packetCount) / (known.packetCount + observed.packetCount);
           known.packetCount += observed.packetCount;
           known.lastSeen = observed.lastSeen;
           found = true;
@@ -346,7 +385,7 @@ void loop() {
       }
       if (!found) {
         // Add new device to known devices
-        if (knownDevices.size() >= 200) {
+        if (knownDevices.size() >= 300) {
           // Remove the oldest device based on lastSeen
           auto oldest = std::min_element(knownDevices.begin(), knownDevices.end(),[](const DeviceInfo &a, const DeviceInfo &b) { return a.lastSeen < b.lastSeen;});
           if (oldest != knownDevices.end()) {
