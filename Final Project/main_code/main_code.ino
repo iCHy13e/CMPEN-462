@@ -7,7 +7,7 @@
 
 // File path
 #define KNOWN_DEVICES_FILE "/known_devices.json"
-#define LEARNING_DURATION 300000  // 5 minutes in ms
+#define LEARNING_DURATION 60000  // 5 minutes in ms
 
 // Struct to hold MAC addresses and tracking data
 struct DeviceInfo {
@@ -25,7 +25,7 @@ std::vector<DeviceInfo> observedDevices;
 bool learningMode = true;
 unsigned long learningStartTime = 0;
 unsigned long lastUpdateTime = 0;
-const unsigned long UPDATE_INTERVAL = 30000; // 30 seconds
+const unsigned long UPDATE_INTERVAL = 60000; // 60 seconds
 
 // AP MAC & IP address
 const uint8_t AP_IP[4] = { 172, 16, 201, 1 };
@@ -41,8 +41,8 @@ const char *ssid = "Parkway Plaza Dojo";
 const char *password = "44WVFXf5";  // i trust that this leak isn't a big deal
 
 // Spoofing detection thresholds
-const unsigned long TIME_WINDOW = 20000;  // 30 seconds for change detection
-const int RSSI_VARIATION_THRESHOLD = 20;  // Max expected RSSI variation for same device
+const unsigned long TIME_WINDOW = 20000;  // 20 seconds for change detection
+const int RSSI_VARIATION_THRESHOLD = 25;  // Max expected RSSI variation for same device
 const int RANDOM_MAC_RSSI = 15;           // threshold for random MAC detection calculation
 const int MIN_PACKET_COUNT = 5;           // Minimum packets required for randomization check
 const float CONFIDENCE_THRESHOLD = 0.5;   // Minimum confidence required
@@ -390,7 +390,7 @@ void loop() {
   } 
    
 
-  // Update known devices every 30 seconds
+  // Update known devices every 60 seconds
   if (currentTime - lastUpdateTime >= UPDATE_INTERVAL) {
     lastUpdateTime = currentTime;
 
