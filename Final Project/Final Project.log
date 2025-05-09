@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.7.8)  8 MAY 2025 16:36
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.7.8)  8 MAY 2025 20:28
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -611,18 +611,22 @@ Underfull \hbox (badness 10000) in paragraph at lines 70--76
 [2]
 
 [3]
-<Diagram.png, id=29, 426.84468pt x 406.51875pt>
+<Diagram.png, id=31, 426.84468pt x 406.51875pt>
 File: Diagram.png Graphic file (type png)
 <use Diagram.png>
-Package pdftex.def Info: Diagram.png  used on input line 110.
+Package pdftex.def Info: Diagram.png  used on input line 113.
 (pdftex.def)             Requested size: 375.80544pt x 357.92989pt.
+LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <10.95> not available
+(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 119.
+LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <9> not available
+(Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 119.
 
 
 [4
 pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.120 \newpage
+l.124 \newpage
                <./Diagram.png>] (c:/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/05/25 1.10b listings language file
 ) (c:/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
@@ -630,20 +634,22 @@ File: lstlang1.sty 2024/05/25 1.10b listings language file
 ) (c:/texlive/2024/texmf-dist/tex/latex/listings/lstmisc.sty
 File: lstmisc.sty 2024/05/25 1.10b (Carsten Heinz)
 )
-Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 121.
+Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 125.
 
 
 [5]
 
 [6]
 
-[7] (c:/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
+[7]
+
+[8] (c:/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/05/25 1.10b listings language file
 ) (c:/texlive/2024/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/05/25 1.10b listings language file
 )
 
-[8] (./Final Project.aux)
+[9] (./Final Project.aux)
  ***********
 LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2024-05-27>
@@ -652,18 +658,18 @@ Package rerunfilecheck Info: File `"Final Project".out' has not changed.
 (rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
  ) 
 Here is how much of TeX's memory you used:
- 23519 strings out of 473584
- 421105 string characters out of 5732364
- 2245908 words of memory out of 5000000
- 45916 multiletter control sequences out of 15000+600000
- 559311 words of font info for 41 fonts, out of 8000000 for 9000
+ 23554 strings out of 473584
+ 421674 string characters out of 5732364
+ 2368908 words of memory out of 5000000
+ 45931 multiletter control sequences out of 15000+600000
+ 559012 words of font info for 40 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 102i,6n,107p,467b,2023s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 102i,6n,107p,467b,1308s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb>
-Output written on "Final Project.pdf" (8 pages, 114725 bytes).
+Output written on "Final Project.pdf" (9 pages, 118999 bytes).
 PDF statistics:
- 222 PDF objects out of 1000 (max. 8388607)
- 201 compressed objects within 3 object streams
- 138 named destinations out of 1000 (max. 500000)
+ 251 PDF objects out of 1000 (max. 8388607)
+ 229 compressed objects within 3 object streams
+ 159 named destinations out of 1000 (max. 500000)
  18 words of extra memory for PDF output out of 10000 (max. 10000000)
 

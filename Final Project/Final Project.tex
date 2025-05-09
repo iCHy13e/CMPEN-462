@@ -74,7 +74,7 @@ the device will save these MAC addresses and their corresponding RSSI values to 
 After the learning period, the device will enter monitoring mode and try to determine if the MAC address of incoming traffic is a spoofed MAC address or not by comparing the RSSI of any new connections
 to the RSSI of other connections that were made recently. \\ 
 
-
+Salient Results: The device is capable of properly sniffing packets and determining when a MAC address might be spoofed.
 %---------------------OUTLINE---------------------
 \newpage
 \secHeader{Outline}
@@ -88,6 +88,9 @@ The main idea behind this project was just to experiment with the ESP32 microcon
 \begin{enumerate}
     \item Windows Command Prompt: command prompt was used during development to pull the MAC address and IP of the access point that I was trying to target, and during testing to 
     ping the access point to generate traffic for the device to detect.
+    \item Rufus: I used Rufus to create a bootable USB drive with an Ubuntu ISO so that I could test when a device uses the same MAC address as the access point. I initially wanted to use
+    my PC as the device and change the MAC address either through Powershell or Device Manager, but the OS doesn't allow for my NIC to change the MAC address.
+    \item Ubuntu Flash: I used the Ubuntu flashdrive on my laptop to change the MAC address of my laptop to match the AP and trigger the alert on the device.
     \item Arduino Nano ESP32 Microcontroller: this was the main hardware part used in the project. I selected it primarily because it was easy to get and I have a little experience with using other 
     Arduino microcontrollers.
     \item Arduino IDE: all the code was done in the Arduino IDE. I selected this IDE because I have prior experience with it from another class and remember it being fairly intuitive to use
@@ -113,9 +116,10 @@ The main idea behind this project was just to experiment with the ESP32 microcon
 \end{figure}
 
 The figure above shows a very general overview of how the system works. The ESP32 detects packets in promiscuous mode which are then processed by the Packet Sniffer function. The MAC 
-Filter removes packets to or from the other access points on the network and also ignores packets sent to FF:FF:FF:FF:FF:FF, which is the broadcast address to prevent the device from
-flooding the storage with unnecessary packets. Depending on what mode the device is currently operating in, the device will either save the packet information to the known\_connections\_file 
-or compare the RSSI of the incoming packet to the RSSI of the other recently received packets to try and determine if it's coming from a spoofed MAC address.
+Filter removes packets being sent to or from the other access points on the network and also ignores packets sent to \textbf{\lstinline[]|FF:FF:FF:FF:FF:FF|}, (the broadcast address) to prevent the device from
+flooding the storage with unnecessary packets. Depending on what "mode" the device is currently operating in, it will either save the packet information to the 
+\textbf{\lstinline[]|known\_connections\_file|} or compare the RSSI of the incoming packet to the RSSI of the other recently received packets to try and determine if it's coming from a 
+spoofed MAC address.
 
 \newpage
 \begin{lstlisting}[language=C++, caption=Packet Sniffer and MAC Filter, label=lst:main_code]
@@ -125,22 +129,22 @@ const DeviceInfo ignoredMACs[] = {
 };
 // Function to check if a MAC address should be ignored
 bool isIgnoredMAC(const uint8_t *mac) {
-    // Check against ignored MACs list
-    for (const auto &ignored : ignoredMACs) {
+  // Check against ignored MACs list
+  for (const auto &ignored : ignoredMACs) {
     if (memcmp(mac, ignored.mac, 6) == 0) {
-        return true;
+      return true;
     }
-    }
+  }
 
-    // Make sure not to ignore the Host AP's MAC address
-    if (mac[0] == 0x84 && mac[1] == 0x23 && mac[2] == 0x88 && mac[3] == 0x7B && mac[4] == 0x90 && mac[5] == 0xA0) { 
+  // Make sure not to ignore the Host AP's MAC address
+  if (mac[0] == 0x84 && mac[1] == 0x23 && mac[2] == 0x88 && mac[3] == 0x7B && mac[4] == 0x90 && mac[5] == 0xA0) { 
     return false;
-    } 
-    //Ignore the MAC addresses of other APs on network
-    else if (mac[0] == 0x84 && mac[1] == 0x23 && mac[2] == 0x88) {
-    return true;
-    }
-    return false;
+  } 
+  //Ignore the MAC addresses of other APs on network
+  else if (mac[0] == 0x84 && mac[1] == 0x23 && mac[2] == 0x88) {
+      return true;
+  }
+  return false;
 }
 
 // Packet sniffer function
@@ -151,24 +155,48 @@ void sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
 
   // Skip ignored MACs
   if (isIgnoredMAC(srcMAC)) return;
-  
+
   updateObservedDevices(srcMAC, rssi);
   if (learningMode) {
     // Print during active window
-      const char *pktType = (type == WIFI_PKT_MGMT) ? "MGMT" : "DATA";
-      Serial.printf("%s - MAC: %s RSSI: %d dBm\n", pktType, macToString(srcMAC).c_str(), rssi);
+    const char *pktType = (type == WIFI_PKT_MGMT) ? "MGMT" : "DATA";
+    Serial.printf("%s - MAC: %s RSSI: %d dBm\n", pktType, macToString(srcMAC).c_str(), rssi);
   } else {
     checkForSpoofing(srcMAC, rssi);
   }
-} 
+}
 \end{lstlisting}
 The packet sniffer is one of the main functions, and is responsible for detecting the packets that are sent to the access point. After detecting a packet, the function checks if the MAC address
-is in the ignored MACs list by calling isIgnoredMAC. If it is, the function will ignore the packet and move on to the next one. If it isn't, the function will call the updateObservedDevices 
-function to update the list of recently observed devices. If the device is in learning mode, the function will also print the MAC address and RSSI of the packet to the serial monitor for the 
-user to see. If the device is in monitoring mode, the function will call checkForSpoofing to try and determine if the MAC address is being spoofed.
+is in the ignored MACs list by calling \textbf{\lstinline[]|isIgnoredMAC|}. The function will check if the MAC address is in the ignored MACs list, and if it is, the ESP32 will ignore the packet 
+and move on to the next one. If it isn't, the function will call the \textbf{\lstinline[]|updateObservedDevices|} function to update the list of recently observed devices which are used to compare 
+RSSI values. If the device is in learning mode, the function will also print the MAC address and RSSI of the packet to the serial monitor for the user to see, but due to the sheer volume of network 
+traffic, the user cannot properly read the information of every packet without pausing the Serial. If the device is in monitoring mode, the function will call \textbf{\lstinline[]|checkForSpoofing|}  
+to try and determine if the MAC address is spoofed or not.
 
 \newpage
 \begin{lstlisting}[language=C++, caption=Spoof Detection, label=lst:spoof detector]
+int AVG_AP_RSSI = 0;
+// Check if the AP's MAC was detected during learning mode
+void detectAP_MAC() {
+  for (const auto &device : knownDevices) {
+    if (memcmp(device.mac, AP_BSSID, 6) == 0) {
+      foundAPMAC = true;
+      break;
+    }
+  }
+  if (foundAPMAC) {
+    for (const auto &device : knownDevices) {
+      if (memcmp(device.mac, AP_BSSID, 6) == 0) {
+        Serial.printf("AP's MAC address: %s was detected during learning mode. RSSI: %d dBm\n", macToString(device.mac).c_str(), device.avgRSSI);
+        AVG_AP_RSSI = device.avgRSSI;
+        Serial.printf("Average RSSI of AP: %d dBm\n", AVG_AP_RSSI);
+        break;
+      }
+    }
+  } else {
+    Serial.println("AP's MAC address was NOT detected during learning mode.");
+  }
+}
 // Check for MAC spoofing
 void checkForSpoofing(const uint8_t *mac, int rssi) {
   unsigned long currentTime = millis();
@@ -198,21 +226,32 @@ void checkForSpoofing(const uint8_t *mac, int rssi) {
         Serial.printf("\nCurrent: %s, Previous: %s\n", macToString(mac).c_str(), macToString(observed.mac).c_str());
         observed.lastAlertTime = currentTime; // Update last alert time
         break; // Stop after the first match
-      }
-    }
-  }
-}
 \end{lstlisting}
-The checkForSpoofing function is the other primary function and is what runs the main logic to determine if the MAC address is being spoofed or not. It checks for 3 main criteria:
+
+The \textbf{\lstinline[]|checkForSpoofing|} function is the other primary logical function and is responsible for determining if the MAC address is being spoofed or not. It checks for 3 main criteria:
 \begin{enumerate}
-    \item If the MAC address matches the MAC address of the access point
-    \item If the RSSI from a known device falls outside of the variation threshold (set to 20 dBm)
+    \item If the MAC address matches the MAC address of the access point and the RSSI deviates by more than the 20dBm variance threshold
+    \item If the RSSI from a known device falls outside of the variation threshold
     \item If the RSSI from an unknown device compared to another recently observed device is within the random MAC RSSI threshold (set to 10 dBm) 
 \end{enumerate}
-If any of these criteria are met, the function will print an alert to the serial monitor. The logic behind the third criteria is that if the RSSI of an unknown device is within a 10 dBm range
-of another recently observed device, it could be a sign that the device is using a randomized MAC address. The TIME\_WINDOW variable determines how long the observed devices are "kept in memory" 
-and is supposed to resets the cooldown period for the alert. However, in testing, it seems that certain devices still manage to trigger the alert more than once within that time period, as shown below 
+\vspace {2mm}
 
+\indent If any of these criteria are met, the function will print an alert to the serial monitor. During development I tried a few different methods to ensure that the AP's MAC address wasn't ignored and still
+allowed a device attempting to spoof the MAC address to be detected. One method I tried using was attempting to pull the IP Source from the IP packet header, but due to my inexperience I couldn't get 
+the ESP32 to properly parse the packet header and retrieve the correct information, which lead to the Serial monitor being flooded with incorrect alerts about a device using the AP's MAC address. 
+I eventually decided to just use the RSSI as a less effective way to determine if the device was spoofing the MAC address, as if the MAC address stayed the same but the RSSI changed by too much it's 
+highly likely that a device is using the AP's MAC address.
+
+\indent After deciding to use the average RSSI, I built the helper function \textbf{\lstinline[]|detectAP_MAC|} in order to store a copy of the access point's average RSSI to a global variable
+which is passed into the \textbf{\lstinline[]|checkForSpoofing|} function in the first argument. \textbf{\lstinline[]|detectAP_MAC|} is called at the end of the learning phase to ensure that the 
+device properly logs the access point's RSSI and to print the MAC address and RSSI to the serial monitor for the user to review.
+
+\indent The logic behind the third criteria is that if the RSSI of an unknown device is within a 10 dBm range
+of another recently observed device, it could be a sign that the device is using a randomized MAC address. The \textbf{\lstinline[]|TIME\_WINDOW|} variable determines how long the observed devices are "kept in memory" 
+and is supposed to reset the cooldown period for the alert. However, in testing, it seems that certain devices still manage to trigger the alert more than once within that time period, as shown below, 
+likely due to any processing delays that occur when the device is processing the packets. 
+
+\vspace{2mm}
 \begin{lstlisting}[language=C++, caption=Serial Output for Spoof Detection, label=lst:spoof detector serial output]
   23:43:38.834 -> ALERT: Potential MAC randomization detected!
   23:43:38.872 -> Current: F6:04:3A:AB:86:9A, Previous: C0:E7:BF:5E:40:C6
@@ -220,15 +259,24 @@ and is supposed to resets the cooldown period for the alert. However, in testing
   23:43:38.872 -> ALERT: Potential MAC randomization detected!
   23:43:38.872 -> Current: F6:89:C7:EE:36:30, Previous: 42:86:27:F0:01:AE
 \end{lstlisting}
+\vspace{2mm}
+\indent While not shown here for brevity, \textbf{\lstinline[]|deleteKnownDevices|}, \textbf{\lstinline[]|saveKnownDevices|}, and \textbf{\lstinline[]|loadKnownDevices|} background functions used to 
+manage the \textbf{\lstinline[]|known\_connections\_file|} JSON file in the ESP32's onboard memory. \textbf{\lstinline[]|deleteKnownDevices|} is toggled during the setup to enable or disable the 
+learning mode. \textbf{\lstinline[]|updateObservedDevices|} is used to keep an updated list of any recently observed devices and their RSSI values regardless of whether or not they are in the 
+known devices list.
 
+\newpage
 \vspace{5mm}
 \noindent\textbf{Assumptions}
 
 One of the core assumptions that I made on this project was that I could isolate the traffic being sent to the access point that I wanted to target. I assumed that by filtering out the MAC addresses
-of the other access points on the network (since it's a shared network for the entire apartment complex), I would be able to get a good idea of the traffic that was being sent to my access point.
-I unfortunately don't know if this assumption was correct and am unsure of whether I successfully isolate the traffic that was being picked up by the ESP32. This assumption is also why I can't come to
-any definitive conclusions about how effective the device is at detecting spoofed MAC addresses. 
-
+of the other access points on the network (since it's a shared network for the entire apartment complex), I would be able to get a good idea of the traffic that was being sent to my specific access point.
+I unfortunately don't know if this assumption was correct and am unsure of whether I successfully isolated the traffic that was being picked up by the ESP32.
+\\\indent Another assumption I made was that the RSSI values of the packets relating to the MAC address of the access point would be consistent enough to distinguish between the 
+access point's legitimate traffic and the traffic of a device attempting to spoof the MAC address. As mentioned before, I wanted to use the IP because it would remain consistent regardless of the 
+MAC address changing but wasn't able to make it work properly. 
+\\\indent Lastly, I also assumed that no one else in the apartment complex would be attempting to spoof their MAC address. Because I'm not sure I successfully isolated the traffic, I have to assume 
+that any traffic picked up during the learning phase is legitimate traffic and can be used as a baseline to set the RSSI values for the various devices.
 
 %---------------------RESULTS---------------------
 \newpage

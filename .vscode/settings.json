@@ -4,6 +4,7 @@
         "microcontrollers"
     ],
     "files.associations": {
-        "vector": "cpp"
+        "vector": "cpp",
+        "cstdlib": "cpp"
     }
 }
