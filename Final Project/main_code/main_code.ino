@@ -7,7 +7,7 @@
 
 // File path
 #define KNOWN_DEVICES_FILE "/known_devices.json"
-#define LEARNING_DURATION 60000  // 5 minutes in ms
+#define LEARNING_DURATION 300000  // 5 minutes in ms
 
 // Struct to hold MAC addresses and tracking data
 struct DeviceInfo {
