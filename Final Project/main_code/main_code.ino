@@ -7,7 +7,7 @@
 
 // File path
 #define KNOWN_DEVICES_FILE "/known_devices.json"
-#define LEARNING_DURATION 300000  // 5 minutes in ms
+#define LEARNING_DURATION 60000  // 5 minutes in ms
 
 // Struct to hold MAC addresses and tracking data
 struct DeviceInfo {
@@ -46,8 +46,8 @@ const int RSSI_VARIATION_THRESHOLD = 25;  // Max expected RSSI variation for sam
 const int RANDOM_MAC_RSSI = 15;           // threshold for random MAC detection calculation
 const int MIN_PACKET_COUNT = 5;           // Minimum packets required for randomization check
 const float CONFIDENCE_THRESHOLD = 0.5;   // Minimum confidence required
-bool foundAPMAC = false;
-int AVG_AP_RSSI = 0;
+bool foundAPMAC = false;                  // Flag to check if AP was detected in learning, default false
+int AVG_AP_RSSI = 0;                      // Average RSSI of AP, default 0, updated after learning mode
 
 
 // Function to check if a MAC address should be ignored
